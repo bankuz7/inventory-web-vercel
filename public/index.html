@@ -42,18 +42,32 @@
             color: #1f2937;
             font-size: 22px;
             font-weight: 600;
-            border-bottom: 2px solid #e5e7eb; 
-            padding-bottom: 15px; 
             margin-top: 0;
-            margin-bottom: 25px;
         }
-
+        .auth-container h1 {
         .auth-container h1 {
             border: none;
             margin-bottom: 10px;
         }
-
+        
+        .admin-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 2px solid #e5e7eb; 
+            padding-bottom: 15px; 
+            margin-bottom: 25px;
+        }
+        
+        .admin-profile-pic {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #3b82f6;
+        }
         .panel {
+            background: #f9fafb;
             background: #f9fafb;
             border: 1px solid #e5e7eb;
             border-radius: 8px;
@@ -256,7 +270,10 @@
 
     <!-- MAIN DASHBOARD -->
     <div id="dashboard" class="container">
-        <h1>Admin Control Panel</h1>
+        <div class="admin-header">
+            <img src="admin-profile.jpg" alt="Admin" class="admin-profile-pic">
+            <h1>Admin Control Panel</h1>
+        </div>
         
         <div class="panel">
             <span class="panel-title">Add New Item</span>
