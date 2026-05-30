@@ -7,65 +7,102 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
         
+        * {
+            box-sizing: border-box;
+        }
+
         body { 
             font-family: 'Inter', sans-serif; 
-            background-color: #f9fafb; 
+            background-color: #f3f4f6; 
             color: #333; 
-            padding: 20px; 
+            padding: 15px; 
             margin: 0;
         }
 
         .container { 
-            max-width: 800px; 
-            margin: 40px auto; 
+            max-width: 900px; 
+            margin: 0 auto; 
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        .header-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            margin-top: 0;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #e5e7eb;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header-text h1 { 
+            color: #1f2937;
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .header-text p {
+            color: #6b7280;
+            margin: 5px 0 0 0;
+            font-size: 14px;
+        }
+
+        .panel {
             background: #ffffff;
             border-radius: 8px;
-            padding: 40px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            padding: 0;
         }
 
-        h1 { 
-            text-align: center;
-            color: #111827;
+        .panel-title {
             font-weight: 600;
-            border-bottom: 2px solid #f3f4f6; 
-            padding-bottom: 20px; 
-            margin-bottom: 30px;
+            color: #4b5563;
+            margin-bottom: 15px;
+            display: block;
+            font-size: 16px;
+            padding: 0 5px;
         }
 
-        .header-info {
-            display: flex;
-            justify-content: space-between;
-            color: #6b7280;
-            margin-bottom: 20px;
-            font-size: 14px;
-            font-weight: 500;
-            background: #f3f4f6;
-            padding: 10px 15px;
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
             border-radius: 6px;
+            border: 1px solid #e5e7eb;
+            background: #ffffff;
         }
 
         table { 
             width: 100%; 
             border-collapse: collapse; 
-            margin-top: 20px; 
-            border-radius: 6px;
-            overflow: hidden;
-            border: 1px solid #e5e7eb;
+            min-width: 500px;
         }
 
         th, td { 
-            padding: 15px 20px; 
+            border-bottom: 1px solid #e5e7eb; 
+            padding: 15px; 
             text-align: left; 
-            border-bottom: 1px solid #e5e7eb;
+            font-size: 14px;
         }
 
         th {
-            background: #f9fafb;
-            color: #4b5563;
+            background-color: #f9fafb;
+            color: #6b7280;
             font-weight: 600;
             text-transform: uppercase;
-            font-size: 13px;
+            font-size: 12px;
             letter-spacing: 0.05em;
         }
 
@@ -73,96 +110,153 @@
             border-bottom: none;
         }
 
-        tr:hover {
-            background-color: #f9fafb;
-        }
-
-        .product-name {
-            font-weight: 500;
+        .qty-cell {
+            font-size: 16px;
+            font-weight: 600;
             color: #1f2937;
         }
 
-        .qty-cell {
-            text-align: right;
-            font-size: 16px;
-            font-weight: 600;
-            color: #3b82f6;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #6b7280;
-        }
-        
-        .badge {
-            background-color: #dcfce7;
-            color: #166534;
+        .badge-in-stock {
+            background: #d1fae5;
+            color: #065f46;
             padding: 4px 8px;
             border-radius: 9999px;
             font-size: 12px;
             font-weight: 500;
         }
+
+        .badge-out-stock {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        a { 
+            color: #3b82f6; 
+            text-decoration: none; 
+            font-weight: 500;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        
+        .live-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @media (max-width: 600px) {
+            .header-section {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            .container { padding: 15px; }
+            .footer-links { flex-direction: column; gap: 15px; text-align: center; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Live Inventory Report</h1>
         
-        <div class="header-info">
-            <span><span class="badge">Live</span> Auto-updating</span>
-            <span id="time"></span>
+        <div class="header-section">
+            <img src="logo.jpg" alt="Restaurant Logo" class="logo">
+            <div class="header-text">
+                <h1>The Barkat's Heaven</h1>
+                <p>Live Inventory Report (Read-only)</p>
+            </div>
         </div>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>Product Name</th>
-                    <th style="text-align: right;">Units Available</th>
-                </tr>
-            </thead>
-            <tbody id="reportBody">
-                <tr><td colspan="2" class="empty-state">Connecting to database...</td></tr>
-            </tbody>
-        </table>
+        
+        <div class="panel">
+            <span class="panel-title"><span class="live-indicator"></span>Live Stock Level</span>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Product Name</th>
+                            <th>Status</th>
+                            <th>Quantity</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryBody">
+                        <tr><td colspan="4" style="text-align:center; color: #6b7280; padding: 30px;">Connecting to database...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="footer-links">
+            <span>Last updated: <span id="lastUpdate" style="color: #1f2937; font-weight: 500;">Just now</span></span>
+        </div>
     </div>
 
     <script>
-        function updateTime() {
-            document.getElementById('time').innerText = "Last Updated: " + new Date().toLocaleTimeString();
-        }
-        
-        async function loadReport() {
+        async function loadInventory() {
             try {
                 const res = await fetch('/api/inventory');
-                if (!res.ok) throw new Error("API Error");
+                if (!res.ok) throw new Error("Failed to fetch data");
                 const data = await res.json();
                 
-                const tbody = document.getElementById('reportBody');
+                const tbody = document.getElementById('inventoryBody');
+                tbody.innerHTML = '';
                 
-                if(!data || data.length === 0) {
-                    tbody.innerHTML = "<tr><td colspan='2' class='empty-state'>No stock data available</td></tr>";
-                    updateTime();
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: #6b7280; padding: 30px;">No inventory items available at the moment.</td></tr>';
                     return;
                 }
-
-                tbody.innerHTML = '';
+                
                 data.forEach(item => {
+                    const statusBadge = item.quantity > 0 
+                        ? '<span class="badge-in-stock">In Stock</span>' 
+                        : '<span class="badge-out-stock">Out of Stock</span>';
+
                     tbody.innerHTML += `
                         <tr>
-                            <td class="product-name">${item.name}</td>
+                            <td style="color:#6b7280;">#${item.id}</td>
+                            <td style="font-weight: 500; color:#1f2937;">${item.name}</td>
+                            <td>${statusBadge}</td>
                             <td class="qty-cell">${item.quantity}</td>
                         </tr>
                     `;
                 });
-                updateTime();
+
+                document.getElementById('lastUpdate').innerText = new Date().toLocaleTimeString();
             } catch (e) {
-                document.getElementById('reportBody').innerHTML = `<tr><td colspan="2" class="empty-state" style="color: #ef4444;">Failed to load data. API connection issue.</td></tr>`;
+                document.getElementById('inventoryBody').innerHTML = `<tr><td colspan="4" style="text-align:center; color: #ef4444; padding: 30px; font-weight: 500;">API Error: ${e.message}</td></tr>`;
             }
         }
-        
-        loadReport();
-        setInterval(loadReport, 10000);
+
+        // Load initially
+        loadInventory();
+
+        // Refresh every 10 seconds silently
+        setInterval(loadInventory, 10000);
     </script>
 </body>
 </html>
