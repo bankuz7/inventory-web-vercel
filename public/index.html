@@ -96,11 +96,6 @@
             background: #2563eb; 
         }
 
-        .btn-inc { background: #10b981; padding: 8px 12px; font-size: 13px; border-radius: 4px; }
-        .btn-dec { background: #ef4444; padding: 8px 12px; font-size: 13px; border-radius: 4px; }
-        .btn-inc:hover { background: #059669; }
-        .btn-dec:hover { background: #dc2626; }
-
         .table-responsive {
             width: 100%;
             overflow-x: auto;
@@ -136,15 +131,45 @@
             border-bottom: none;
         }
 
+        /* Quantity Control Styles */
+        .qty-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
         .qty-cell {
             font-size: 16px;
             font-weight: 600;
             color: #1f2937;
+            min-width: 30px;
+            text-align: center;
         }
 
-        .actions {
+        .btn-qty {
+            background: #f3f4f6;
+            color: #4b5563;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            width: 32px;
+            height: 32px;
+            padding: 0;
             display: flex;
-            gap: 8px;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .btn-qty:hover {
+            background: #e5e7eb;
+            color: #1f2937;
+            border-color: #9ca3af;
+        }
+
+        .btn-qty:active {
+            transform: scale(0.95);
         }
 
         .footer-links {
@@ -175,27 +200,12 @@
             font-weight: 500;
         }
 
-        /* Mobile Responsiveness */
         @media (max-width: 600px) {
-            .form-group {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            #itemQty {
-                width: 100% !important;
-            }
-            .btn-add {
-                width: 100%;
-                padding: 14px;
-            }
-            .container {
-                padding: 15px;
-            }
-            .footer-links {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
+            .form-group { flex-direction: column; align-items: stretch; }
+            #itemQty { width: 100% !important; }
+            .btn-add { width: 100%; padding: 14px; }
+            .container { padding: 15px; }
+            .footer-links { flex-direction: column; gap: 15px; text-align: center; }
         }
     </style>
 </head>
@@ -221,12 +231,11 @@
                         <tr>
                             <th>ID</th>
                             <th>Product Name</th>
-                            <th>Stock</th>
-                            <th>Manage</th>
+                            <th>Quantity</th>
                         </tr>
                     </thead>
                     <tbody id="inventoryBody">
-                        <tr><td colspan="4" style="text-align:center; color: #6b7280; padding: 30px;">Loading database...</td></tr>
+                        <tr><td colspan="3" style="text-align:center; color: #6b7280; padding: 30px;">Loading database...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -252,25 +261,27 @@
                 tbody.innerHTML = '';
                 
                 if (!data || data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: #6b7280; padding: 30px;">No items found. Add one above.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: #6b7280; padding: 30px;">No items found. Add one above.</td></tr>';
                     return;
                 }
                 
                 data.forEach(item => {
                     tbody.innerHTML += `
                         <tr>
-                            <td style="color:#6b7280;">#${item.id}</td>
+                            <td style="color:#6b7280; width: 60px;">#${item.id}</td>
                             <td style="font-weight: 500; color:#1f2937;">${item.name}</td>
-                            <td class="qty-cell" id="qty-${item.id}">${item.quantity}</td>
-                            <td class="actions">
-                                <button class="btn-inc" onclick="updateQty(${item.id}, 1)">+ Add</button>
-                                <button class="btn-dec" onclick="updateQty(${item.id}, -1)">- Remove</button>
+                            <td>
+                                <div class="qty-control">
+                                    <button class="btn-qty" onclick="updateQty(${item.id}, -1)">−</button>
+                                    <span class="qty-cell" id="qty-${item.id}">${item.quantity}</span>
+                                    <button class="btn-qty" onclick="updateQty(${item.id}, 1)">+</button>
+                                </div>
                             </td>
                         </tr>
                     `;
                 });
             } catch (e) {
-                document.getElementById('inventoryBody').innerHTML = `<tr><td colspan="4" style="text-align:center; color: #ef4444; padding: 30px; font-weight: 500;">API Error: ${e.message}</td></tr>`;
+                document.getElementById('inventoryBody').innerHTML = `<tr><td colspan="3" style="text-align:center; color: #ef4444; padding: 30px; font-weight: 500;">API Error: ${e.message}</td></tr>`;
             }
         }
 
