@@ -39,6 +39,10 @@
         .btn-qty:hover { background: #e5e7eb; color: #1f2937; border-color: #9ca3af; }
         .low-stock { color: #dc2626 !important; font-weight: 700 !important; animation: pulse 2s infinite; }
         .category-tag { background: #e0e7ff; color: #047857; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; }
+        .category-inline { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+        .category-select-sm { padding: 6px 10px; font-size: 12px; border-radius: 9999px; }
+        .btn-save { background: #111827; padding: 6px 10px; font-size: 12px; border-radius: 9999px; }
+        .btn-save:hover { background: #000000; }
         .time-updated { font-size: 11px; color: #9ca3af; display: block; margin-top: 4px; }
         .footer-links { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 14px; color: #6b7280; }
         a { color: #3b82f6; text-decoration: none; font-weight: 500; }
@@ -169,7 +173,19 @@
                     <tr id="row-${item.id}" class="item-row">
                         <td>
                             <div style="font-weight: 500; color:#1f2937; margin-bottom: 4px;">${item.name}</div>
-                            <span class="category-tag">${cat}</span>
+                            
+                            <div class="category-inline">
+                                <span class="category-tag">${cat}</span>
+                                <select class="category-select-sm" id="cat-${item.id}">
+                                        <option value="General">General</option>
+                                        <option value="Spices">Spices</option>
+                                        <option value="Vegetables">Vegetables</option>
+                                        <option value="Meat">Meat</option>
+                                        <option value="Drinks">Drinks</option>
+                                        <option value="Packaging">Packaging</option>
+                                </select>
+                                <button class="btn-save" onclick="saveCategory(${item.id})">Save</button>
+                            </div>
                             <span class="time-updated">Updated: <span id="time-${item.id}">${timeStr}</span></span>
                         </td>
                         <td>
@@ -188,9 +204,44 @@
                     </tr>
                 `;
             });
+            setCategorySelectValues();
         }
 
-        async function loadInventory() {
+        
+        function setCategorySelectValues() {
+            // set each category select to current item category
+            globalData.forEach(item => {
+                const el = document.getElementById(`cat-${item.id}`);
+                if (el) el.value = (item.category || 'General');
+            });
+        }
+
+        async function saveCategory(id) {
+            const sel = document.getElementById(`cat-${id}`);
+            if (!sel) return;
+            const newCat = sel.value;
+            try {
+                const res = await fetch(`/api/inventory/${id}/category`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ category: newCat })
+                });
+                if (res.status === 401) { logout(); return; }
+                if (!res.ok) {
+                    const e = await res.json().catch(() => ({}));
+                    throw new Error(e.error || 'Category update failed');
+                }
+                // Refresh to show updated time, etc.
+                loadInventory();
+            } catch (e) {
+                alert('Error: ' + e.message);
+                // revert select to previous value on error
+                const oldItem = globalData.find(x => x.id === id);
+                if (oldItem) sel.value = (oldItem.category || 'General');
+            }
+        }
+
+async function loadInventory() {
             try {
                 const res = await fetch('/api/inventory');
                 if (!res.ok) throw new Error("Failed to fetch data");

@@ -145,6 +145,60 @@ app.post('/api/inventory', requirePin, async (req, res) => {
 });
 
 // ADMIN: Update quantity (+/-)
+
+// ADMIN: Update category
+app.post('/api/inventory/:id/category', requirePin, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const category = (req.body.category && String(req.body.category).trim().length)
+      ? String(req.body.category).trim()
+      : 'General';
+
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: 'Invalid ID' });
+    }
+
+    // fetch current item
+    const { data: currentData, error: fetchError } = await supabaseAdmin
+      .from('inventory')
+      .select('name,category,quantity')
+      .eq('id', id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    const now = new Date().toISOString();
+
+    const { data, error } = await supabaseAdmin
+      .from('inventory')
+      .update({ category, updated_at: now })
+      .eq('id', id)
+      .select();
+
+    if (error) throw error;
+
+    // history log (delta 0; qty unchanged)
+    try {
+      await logHistory({
+        item_id: id,
+        item_name: currentData?.name || null,
+        action: 'category',
+        delta: 0,
+        qty_before: currentData?.quantity ?? null,
+        qty_after: currentData?.quantity ?? null,
+      });
+    } catch (e) {
+      return res.status(500).json({
+        error: `Category updated but history logging failed: ${e.message}. Please create table inventory_history in Supabase.`
+      });
+    }
+
+    res.json({ updated: 1, category: data?.[0]?.category ?? category, updated_at: now });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 app.post('/api/inventory/:id/update', requirePin, async (req, res) => {
   try {
     const delta = parseInt(req.body.delta, 10);
