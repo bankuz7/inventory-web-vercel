@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Report</title>
+    <style>
+        body { font-family: 'Courier New', Courier, monospace; background-color: #0a0a0a; color: #00ff00; padding: 20px; }
+        .container { max-width: 800px; margin: auto; }
+        h1 { border-bottom: 1px dashed #00ff00; padding-bottom: 10px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #00ff00; padding: 10px; text-align: left; }
+        .timestamp { text-align: right; font-size: 0.8em; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>[ SYSTEM REPORT ] - INVENTORY STATUS</h1>
+        <div class="timestamp" id="time"></div>
+        <table>
+            <thead>
+                <tr>
+                    <th>ITEM NAME</th>
+                    <th>STOCK AVAILABLE</th>
+                </tr>
+            </thead>
+            <tbody id="reportBody">
+                <!-- Data will load here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        document.getElementById('time').innerText = "GENERATED: " + new Date().toLocaleString();
+        
+        async function loadReport() {
+            const res = await fetch('/api/inventory');
+            const data = await res.json();
+            const tbody = document.getElementById('reportBody');
+            
+            if(data.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='2'>NO DATA FOUND</td></tr>";
+                return;
+            }
+
+            data.forEach(item => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td>${item.quantity}</td>
+                    </tr>
+                `;
+            });
+        }
+        loadReport();
+    </script>
+</body>
+</html>

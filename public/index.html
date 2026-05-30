@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management | System</title>
+    <style>
+        body { font-family: 'Courier New', Courier, monospace; background-color: #0a0a0a; color: #00ff00; padding: 20px; }
+        .container { max-width: 800px; margin: auto; }
+        h1 { border-bottom: 1px solid #00ff00; padding-bottom: 10px; }
+        .form-group { margin-bottom: 20px; }
+        input[type="text"], input[type="number"] { background: #1a1a1a; border: 1px solid #00ff00; color: #00ff00; padding: 5px; }
+        button { background: #004400; color: #00ff00; border: 1px solid #00ff00; padding: 5px 10px; cursor: pointer; }
+        button:hover { background: #00ff00; color: #000; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #00ff00; padding: 10px; text-align: left; }
+        .actions button { margin-right: 5px; }
+        .report-link { display: inline-block; margin-top: 20px; color: #00ff00; text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>[+] INVENTORY CONTROL SYSTEM</h1>
+        
+        <div class="form-group">
+            <h3>ADD NEW ITEM</h3>
+            <input type="text" id="itemName" placeholder="Item Name">
+            <input type="number" id="itemQty" placeholder="Initial Qty" value="0">
+            <button onclick="addItem()">[ EXECUTE ADD ]</button>
+        </div>
+
+        <h3>CURRENT STOCK</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>ITEM NAME</th>
+                    <th>QUANTITY</th>
+                    <th>ACTIONS (+ / -)</th>
+                </tr>
+            </thead>
+            <tbody id="inventoryBody">
+                <!-- Data will load here -->
+            </tbody>
+        </table>
+        
+        <a href="report.html" class="report-link" target="_blank">[ VIEW PUBLIC REPORT ]</a>
+    </div>
+
+    <script>
+        async function loadInventory() {
+            const res = await fetch('/api/inventory');
+            const data = await res.json();
+            const tbody = document.getElementById('inventoryBody');
+            tbody.innerHTML = '';
+            
+            data.forEach(item => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${item.id}</td>
+                        <td>${item.name}</td>
+                        <td id="qty-${item.id}">${item.quantity}</td>
+                        <td class="actions">
+                            <button onclick="updateQty(${item.id}, 1)">[ +1 ]</button>
+                            <button onclick="updateQty(${item.id}, -1)">[ -1 ]</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function addItem() {
+            const name = document.getElementById('itemName').value;
+            const qty = document.getElementById('itemQty').value;
+            if(!name) return alert('Enter item name');
+            
+            await fetch('/api/inventory', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, quantity: qty })
+            });
+            
+            document.getElementById('itemName').value = '';
+            loadInventory();
+        }
+
+        async function updateQty(id, delta) {
+            await fetch(`/api/inventory/${id}/update`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ delta })
+            });
+            loadInventory();
+        }
+
+        loadInventory();
+    </script>
+</body>
+</html>
