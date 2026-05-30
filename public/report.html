@@ -261,6 +261,100 @@
             .footer-section { margin-top: 10px; padding-top: 10px; }
         }
 
+    
+
+        .history-section {
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .history-title {
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 14px;
+        }
+
+        .history-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-toggle {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+            border-radius: 9999px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        .btn-toggle.active {
+            background: #111827;
+            color: #ffffff;
+            border-color: #111827;
+        }
+
+        .history-list {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 14px;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 13px;
+        }
+        .history-item:last-child { border-bottom: none; }
+
+        .history-left {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .history-right {
+            text-align: right;
+            white-space: nowrap;
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        .delta-plus { color: #059669; font-weight: 700; }
+        .delta-minus { color: #dc2626; font-weight: 700; }
+        .delta-zero { color: #6b7280; font-weight: 700; }
+
+        .history-meta {
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        .history-empty {
+            padding: 16px;
+            color: #6b7280;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        @media print {
+            .history-section { display: none !important; }
+        }
+
     </style>
 </head>
 <body>
@@ -305,6 +399,20 @@
             </div>
         </div>
         
+        
+        <div class="history-section" id="historySection">
+            <div class="history-header">
+                <div class="history-title">Change History</div>
+                <div class="history-controls">
+                    <button class="btn-toggle active" id="btnToday" onclick="setHistoryMode('today')">Today</button>
+                    <button class="btn-toggle" id="btnTomorrow" onclick="setHistoryMode('tomorrow')">Tomorrow</button>
+                </div>
+            </div>
+            <div class="history-list" id="historyList">
+                <div class="history-empty">Loading history...</div>
+            </div>
+        </div>
+
         <div class="footer-section">
             <span>Last updated: <span id="lastUpdate" style="color: #1f2937; font-weight: 500;">Just now</span></span>
             <span>Created by <a href="https://portfolio-eight-pi-94.vercel.app/" target="_blank" style="font-weight: 600;">Dhum Jitesh</a></span>
@@ -312,7 +420,9 @@
     </div>
 
     <script>
-        let globalData = [];
+        let globalData = []
+        let historyData = []
+        let historyMode = 'today';
 
         function formatDate(dateStr) {
             if(!dateStr) return "Never updated";
@@ -399,10 +509,93 @@
             window.print();
         }
 
+        
+
+        function isSameLocalDate(d, y, m, day) {
+            return d.getFullYear() === y && d.getMonth() === m && d.getDate() === day;
+        }
+
+        function formatTimeOnly(iso) {
+            const d = new Date(iso);
+            return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatHistoryDelta(delta) {
+            if (delta > 0) return `<span class="delta-plus">+${delta}</span>`;
+            if (delta < 0) return `<span class="delta-minus">${delta}</span>`;
+            return `<span class="delta-zero">${delta}</span>`;
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            if (!list) return;
+
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = now.getMonth();
+            const d = now.getDate();
+
+            // Tomorrow date
+            const t = new Date(now);
+            t.setDate(t.getDate() + 1);
+
+            const filtered = historyData.filter(h => {
+                const hd = new Date(h.created_at);
+                if (historyMode === 'today') return isSameLocalDate(hd, y, m, d);
+                if (historyMode === 'tomorrow') return isSameLocalDate(hd, t.getFullYear(), t.getMonth(), t.getDate());
+                return false;
+            });
+
+            if (!filtered.length) {
+                list.innerHTML = `<div class="history-empty">No changes logged for ${historyMode}.</div>`;
+                return;
+            }
+
+            list.innerHTML = filtered.slice(0, 200).map(h => {
+                const name = h.item_name || `Item #${h.item_id}`;
+                const delta = typeof h.delta === 'number' ? h.delta : parseInt(h.delta || '0', 10);
+                const before = (h.qty_before === null || h.qty_before === undefined) ? '—' : h.qty_before;
+                const after = (h.qty_after === null || h.qty_after === undefined) ? '—' : h.qty_after;
+                const action = h.action || 'change';
+                const actionLabel = action === 'add' ? 'Added' : (action === 'delete' ? 'Deleted' : 'Adjusted');
+
+                return `
+                    <div class="history-item">
+                        <div class="history-left">
+                            <div style="font-weight: 600; color: #111827;">${actionLabel}: ${name}</div>
+                            <div class="history-meta">Delta: ${formatHistoryDelta(delta)} &nbsp;|&nbsp; Qty: ${before} → ${after}</div>
+                        </div>
+                        <div class="history-right">${formatTimeOnly(h.created_at)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function setHistoryMode(mode) {
+            historyMode = mode;
+            document.getElementById('btnToday')?.classList.toggle('active', mode === 'today');
+            document.getElementById('btnTomorrow')?.classList.toggle('active', mode === 'tomorrow');
+            renderHistory();
+        }
+
+        async function loadHistory() {
+            try {
+                const res = await fetch('/api/history?limit=500');
+                if (!res.ok) throw new Error('Failed to fetch history');
+                historyData = await res.json();
+                renderHistory();
+            } catch (e) {
+                const list = document.getElementById('historyList');
+                if (list) list.innerHTML = `<div class="history-empty">History unavailable: ${e.message}</div>`;
+            }
+        }
+
         // Load initially
         loadInventory();
+        loadHistory();
         // Refresh every 10 seconds
         setInterval(loadInventory, 10000);
+        setInterval(loadHistory, 10000);
     </script>
 </body>
 </html>

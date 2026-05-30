@@ -33,6 +33,25 @@ const supabaseAdmin = createClient(
   { auth: { persistSession: false } }
 );
 
+async function logHistory(entry) {
+  // entry: { item_id, item_name, action, delta, qty_before, qty_after }
+  const payload = {
+    item_id: entry.item_id ?? null,
+    item_name: entry.item_name ?? null,
+    action: entry.action,
+    delta: Number.isFinite(Number(entry.delta)) ? parseInt(entry.delta, 10) : 0,
+    qty_before: Number.isFinite(Number(entry.qty_before)) ? parseInt(entry.qty_before, 10) : null,
+    qty_after: Number.isFinite(Number(entry.qty_after)) ? parseInt(entry.qty_after, 10) : null,
+    created_at: new Date().toISOString(),
+  };
+
+  const { error } = await supabaseAdmin
+    .from('inventory_history')
+    .insert([payload]);
+
+  if (error) throw error;
+}
+
 const requirePin = (req, res, next) => {
   const pin = req.headers['x-admin-pin'];
   if (pin !== ADMIN_PIN) {
@@ -61,6 +80,25 @@ app.get('/api/inventory', async (req, res) => {
   }
 });
 
+// PUBLIC: Recent change history (for report page)
+app.get('/api/history', async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit || '300', 10) || 300, 1000);
+
+    const { data, error } = await supabasePublic
+      .from('inventory_history')
+      .select('id,item_id,item_name,action,delta,qty_before,qty_after,created_at')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // ADMIN: Add new item
 app.post('/api/inventory', requirePin, async (req, res) => {
   try {
@@ -80,7 +118,27 @@ app.post('/api/inventory', requirePin, async (req, res) => {
       .select();
 
     if (error) throw error;
-    res.json(data?.[0] || null);
+    const inserted = data?.[0] || null;
+
+    // history log
+    if (inserted) {
+      try {
+        await logHistory({
+          item_id: inserted.id,
+          item_name: inserted.name,
+          action: 'add',
+          delta: qty,
+          qty_before: null,
+          qty_after: qty,
+        });
+      } catch (e) {
+        return res.status(500).json({
+          error: `Item added but history logging failed: ${e.message}. Please create table inventory_history in Supabase.`
+        });
+      }
+    }
+
+    res.json(inserted);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -98,13 +156,14 @@ app.post('/api/inventory/:id/update', requirePin, async (req, res) => {
 
     const { data: currentData, error: fetchError } = await supabaseAdmin
       .from('inventory')
-      .select('quantity')
+      .select('name,quantity')
       .eq('id', id)
       .single();
 
     if (fetchError) throw fetchError;
 
-    const newQty = (currentData?.quantity || 0) + delta;
+    const beforeQty = currentData?.quantity || 0;
+    const newQty = beforeQty + delta;
     const now = new Date().toISOString();
 
     const { data, error } = await supabaseAdmin
@@ -114,6 +173,22 @@ app.post('/api/inventory/:id/update', requirePin, async (req, res) => {
       .select();
 
     if (error) throw error;
+    // history log
+    try {
+      await logHistory({
+        item_id: id,
+        item_name: currentData?.name || null,
+        action: 'adjust',
+        delta,
+        qty_before: beforeQty,
+        qty_after: newQty,
+      });
+    } catch (e) {
+      return res.status(500).json({
+        error: `Quantity updated but history logging failed: ${e.message}. Please create table inventory_history in Supabase.`
+      });
+    }
+
     res.json({ updated: 1, newQuantity: data?.[0]?.quantity ?? newQty, updated_at: now });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -126,12 +201,36 @@ app.delete('/api/inventory/:id', requirePin, async (req, res) => {
     const id = parseInt(req.params.id, 10);
     if (!Number.isFinite(id)) return res.status(400).json({ error: 'Invalid ID' });
 
+    // fetch before delete for history
+    const { data: before, error: beforeErr } = await supabaseAdmin
+      .from('inventory')
+      .select('name,quantity')
+      .eq('id', id)
+      .single();
+    if (beforeErr) throw beforeErr;
+
     const { error } = await supabaseAdmin
       .from('inventory')
       .delete()
       .eq('id', id);
 
     if (error) throw error;
+    // history log
+    try {
+      await logHistory({
+        item_id: id,
+        item_name: before?.name || null,
+        action: 'delete',
+        delta: 0,
+        qty_before: before?.quantity ?? null,
+        qty_after: null,
+      });
+    } catch (e) {
+      return res.status(500).json({
+        error: `Item deleted but history logging failed: ${e.message}. Please create table inventory_history in Supabase.`
+      });
+    }
+
     res.json({ deleted: true });
   } catch (err) {
     res.status(400).json({ error: err.message });
