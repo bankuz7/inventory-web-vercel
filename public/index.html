@@ -3,72 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HACKER INVENTORY // SYSTEM</title>
+    <title>Inventory Management System</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
         
-        :root {
-            --bg-color: #050505;
-            --terminal-green: #00ff41;
-            --terminal-dark-green: #003b00;
-            --terminal-red: #ff003c;
-            --glow: 0 0 10px rgba(0, 255, 65, 0.5);
-            --red-glow: 0 0 10px rgba(255, 0, 60, 0.5);
-        }
-
         body { 
-            font-family: 'Share Tech Mono', monospace; 
-            background-color: var(--bg-color); 
-            color: var(--terminal-green); 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f3f4f6; 
+            color: #333; 
             padding: 20px; 
             margin: 0;
-            background-image: linear-gradient(rgba(0, 255, 65, 0.05) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 255, 65, 0.05) 1px, transparent 1px);
-            background-size: 20px 20px;
         }
 
         .container { 
             max-width: 900px; 
             margin: 20px auto; 
-            background: rgba(0, 0, 0, 0.8);
-            border: 1px solid var(--terminal-green);
+            background: #ffffff;
+            border-radius: 8px;
             padding: 30px;
-            box-shadow: var(--glow);
-            position: relative;
-        }
-
-        .container::before {
-            content: "SYSTEM_ACCESS_GRANTED";
-            position: absolute;
-            top: -10px;
-            left: 20px;
-            background: var(--bg-color);
-            padding: 0 10px;
-            font-size: 0.8em;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
 
         h1 { 
-            text-align: center;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            border-bottom: 2px dashed var(--terminal-dark-green); 
+            color: #1f2937;
+            font-size: 24px;
+            font-weight: 600;
+            border-bottom: 2px solid #e5e7eb; 
             padding-bottom: 15px; 
             margin-bottom: 30px;
-            text-shadow: var(--glow);
         }
 
         .panel {
-            border: 1px solid var(--terminal-dark-green);
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
             padding: 20px;
             margin-bottom: 30px;
         }
 
         .panel-title {
-            color: #aaa;
-            margin-top: -30px;
-            background: var(--bg-color);
-            display: inline-block;
-            padding: 0 10px;
+            font-weight: 600;
+            color: #4b5563;
+            margin-bottom: 15px;
+            display: block;
+            font-size: 16px;
         }
 
         .form-group { 
@@ -78,97 +56,111 @@
         }
 
         input[type="text"], input[type="number"] { 
-            background: rgba(0, 20, 0, 0.5); 
-            border: 1px solid var(--terminal-green); 
-            color: var(--terminal-green); 
-            padding: 12px; 
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 1.1em;
+            background: #ffffff; 
+            border: 1px solid #d1d5db; 
+            border-radius: 4px;
+            color: #1f2937; 
+            padding: 10px 12px; 
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
             outline: none;
             width: 100%;
+            transition: border-color 0.2s;
         }
 
         input:focus {
-            box-shadow: inset 0 0 5px var(--terminal-green);
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
         button { 
-            background: transparent; 
-            color: var(--terminal-green); 
-            border: 1px solid var(--terminal-green); 
-            padding: 12px 20px; 
+            background: #3b82f6; 
+            color: #ffffff; 
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px; 
             cursor: pointer; 
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 1.1em;
-            text-transform: uppercase;
-            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 14px;
+            transition: background-color 0.2s;
         }
 
         button:hover { 
-            background: var(--terminal-green); 
-            color: var(--bg-color); 
-            box-shadow: var(--glow);
+            background: #2563eb; 
         }
 
         .btn-add { flex-shrink: 0; }
 
-        .btn-inc { color: var(--terminal-green); border-color: var(--terminal-green); padding: 5px 15px; }
-        .btn-dec { color: var(--terminal-red); border-color: var(--terminal-red); padding: 5px 15px; }
-        .btn-inc:hover { background: var(--terminal-green); color: black; box-shadow: var(--glow); }
-        .btn-dec:hover { background: var(--terminal-red); color: white; box-shadow: var(--red-glow); }
+        .btn-inc { background: #10b981; padding: 6px 12px; font-size: 13px; }
+        .btn-dec { background: #ef4444; padding: 6px 12px; font-size: 13px; }
+        .btn-inc:hover { background: #059669; }
+        .btn-dec:hover { background: #dc2626; }
 
         table { 
             width: 100%; 
             border-collapse: collapse; 
             margin-top: 10px; 
+            background: #ffffff;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
         }
 
         th, td { 
-            border-bottom: 1px solid var(--terminal-dark-green); 
-            padding: 15px 10px; 
+            border-bottom: 1px solid #e5e7eb; 
+            padding: 12px 15px; 
             text-align: left; 
+            font-size: 14px;
         }
 
         th {
-            color: #888;
-            font-weight: normal;
+            background-color: #f9fafb;
+            color: #6b7280;
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.05em;
         }
 
-        tr:hover {
-            background: rgba(0, 255, 65, 0.05);
+        tr:last-child td {
+            border-bottom: none;
         }
 
         .qty-cell {
-            font-size: 1.2em;
-            font-weight: bold;
-            text-shadow: var(--glow);
+            font-size: 15px;
+            font-weight: 600;
+            color: #1f2937;
         }
 
         .actions {
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
 
         .footer-links {
             display: flex;
             justify-content: space-between;
             margin-top: 30px;
-            border-top: 1px dashed var(--terminal-dark-green);
             padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 14px;
+            color: #6b7280;
         }
 
         a { 
-            color: var(--terminal-green); 
+            color: #3b82f6; 
             text-decoration: none; 
+            font-weight: 500;
         }
+        
         a:hover {
             text-decoration: underline;
-            text-shadow: var(--glow);
         }
         
         #status-msg {
-            color: var(--terminal-red);
-            font-size: 0.9em;
+            color: #ef4444;
+            font-size: 13px;
             margin-top: 10px;
             display: block;
         }
@@ -176,38 +168,38 @@
 </head>
 <body>
     <div class="container">
-        <h1>// ROOT INVENTORY CONTROL //</h1>
+        <h1>Inventory Management System</h1>
         
         <div class="panel">
-            <span class="panel-title">[ NEW ENTRY ]</span>
+            <span class="panel-title">Add New Item</span>
             <div class="form-group">
-                <input type="text" id="itemName" placeholder="> Enter Item Name_">
-                <input type="number" id="itemQty" placeholder="QTY" value="0" style="width: 100px;">
-                <button class="btn-add" onclick="addItem()">EXECUTE</button>
+                <input type="text" id="itemName" placeholder="Enter item name (e.g., Laptop, Mouse)">
+                <input type="number" id="itemQty" placeholder="Qty" value="0" style="width: 100px;">
+                <button class="btn-add" onclick="addItem()">Add to Inventory</button>
             </div>
             <span id="status-msg"></span>
         </div>
 
-        <div class="panel">
-            <span class="panel-title">[ DATABASE RECORDS ]</span>
+        <div class="panel" style="background: #ffffff;">
+            <span class="panel-title">Current Stock Level</span>
             <table>
                 <thead>
                     <tr>
-                        <th>ID_REF</th>
-                        <th>ITEM_IDENTIFIER</th>
-                        <th>STOCK_LEVEL</th>
-                        <th>MANIPULATE</th>
+                        <th>Item ID</th>
+                        <th>Product Name</th>
+                        <th>Available Stock</th>
+                        <th>Manage Stock</th>
                     </tr>
                 </thead>
                 <tbody id="inventoryBody">
-                    <tr><td colspan="4" style="text-align:center; color: #555;">Loading database...</td></tr>
+                    <tr><td colspan="4" style="text-align:center; color: #6b7280; padding: 30px;">Loading database...</td></tr>
                 </tbody>
             </table>
         </div>
         
         <div class="footer-links">
-            <span>STATUS: <span style="text-shadow: var(--glow);">ONLINE</span></span>
-            <a href="report.html" target="_blank">[ ACCESS PUBLIC REPORT ]</a>
+            <span>System Status: <span style="color: #10b981; font-weight: 500;">Online</span></span>
+            <a href="report.html" target="_blank">View Public Report &rarr;</a>
         </div>
     </div>
 
@@ -215,32 +207,35 @@
         async function loadInventory() {
             try {
                 const res = await fetch('/api/inventory');
-                if (!res.ok) throw new Error("API Connection Failed");
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || "Failed to fetch from API. Check Supabase setup.");
+                }
                 const data = await res.json();
                 
                 const tbody = document.getElementById('inventoryBody');
                 tbody.innerHTML = '';
                 
-                if (data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: #555;">NO RECORDS FOUND IN DATABASE</td></tr>';
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: #6b7280; padding: 30px;">No items found in database. Add one above.</td></tr>';
                     return;
                 }
                 
                 data.forEach(item => {
                     tbody.innerHTML += `
                         <tr>
-                            <td style="color:#666;">#${item.id}</td>
-                            <td style="font-size: 1.1em;">${item.name}</td>
+                            <td style="color:#6b7280;">#${item.id}</td>
+                            <td style="font-weight: 500; color:#1f2937;">${item.name}</td>
                             <td class="qty-cell" id="qty-${item.id}">${item.quantity}</td>
                             <td class="actions">
-                                <button class="btn-inc" onclick="updateQty(${item.id}, 1)">+ 1</button>
-                                <button class="btn-dec" onclick="updateQty(${item.id}, -1)">- 1</button>
+                                <button class="btn-inc" onclick="updateQty(${item.id}, 1)">+ Add</button>
+                                <button class="btn-dec" onclick="updateQty(${item.id}, -1)">- Remove</button>
                             </td>
                         </tr>
                     `;
                 });
             } catch (e) {
-                document.getElementById('status-msg').innerText = "ERROR: " + e.message;
+                document.getElementById('inventoryBody').innerHTML = `<tr><td colspan="4" style="text-align:center; color: #ef4444; padding: 20px;">API Error: ${e.message}</td></tr>`;
             }
         }
 
@@ -250,11 +245,12 @@
             const status = document.getElementById('status-msg');
             
             if(!name) {
-                status.innerText = "ERROR: Item name is required.";
+                status.innerText = "Please enter an item name.";
                 return;
             }
             
             status.innerText = "Processing...";
+            status.style.color = "#3b82f6";
             
             try {
                 const res = await fetch('/api/inventory', {
@@ -264,15 +260,20 @@
                 });
                 
                 if (!res.ok) {
-                    const errData = await res.json();
-                    throw new Error(errData.error || "Failed to add item");
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || "Failed to add item. Check Supabase connection.");
                 }
                 
                 document.getElementById('itemName').value = '';
-                status.innerText = "";
+                document.getElementById('itemQty').value = '0';
+                status.innerText = "Item added successfully!";
+                status.style.color = "#10b981";
+                setTimeout(() => status.innerText = "", 3000);
+                
                 loadInventory();
             } catch (e) {
-                status.innerText = "ERROR: " + e.message;
+                status.style.color = "#ef4444";
+                status.innerText = "API Error: " + e.message;
             }
         }
 
@@ -280,9 +281,7 @@
             const qtyElement = document.getElementById(`qty-${id}`);
             const originalQty = parseInt(qtyElement.innerText);
             
-            // Optimistic UI update
-            qtyElement.innerText = originalQty + delta;
-            qtyElement.style.color = "yellow";
+            qtyElement.innerText = "...";
             
             try {
                 const res = await fetch(`/api/inventory/${id}/update`, {
@@ -291,17 +290,16 @@
                     body: JSON.stringify({ delta })
                 });
                 
-                if (!res.ok) throw new Error("Failed to update");
-                const data = await res.json();
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || "Update failed");
+                }
                 
-                // Confirm update from server
+                const data = await res.json();
                 qtyElement.innerText = data.newQuantity;
-                qtyElement.style.color = "var(--terminal-green)";
             } catch (e) {
-                // Revert if failed
+                alert("API Error: " + e.message);
                 qtyElement.innerText = originalQty;
-                qtyElement.style.color = "var(--terminal-red)";
-                setTimeout(() => qtyElement.style.color = "var(--terminal-green)", 2000);
             }
         }
 

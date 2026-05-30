@@ -3,124 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REPORT // SYSTEM</title>
+    <title>Live Inventory Report</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
         
-        :root {
-            --bg-color: #000;
-            --terminal-blue: #00e5ff;
-            --terminal-dark-blue: #003344;
-            --glow: 0 0 10px rgba(0, 229, 255, 0.5);
-        }
-
         body { 
-            font-family: 'Share Tech Mono', monospace; 
-            background-color: var(--bg-color); 
-            color: var(--terminal-blue); 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f9fafb; 
+            color: #333; 
             padding: 20px; 
             margin: 0;
-            background-image: radial-gradient(circle, rgba(0, 229, 255, 0.1) 1px, transparent 1px);
-            background-size: 30px 30px;
         }
 
         .container { 
             max-width: 800px; 
             margin: 40px auto; 
-            background: rgba(0, 10, 15, 0.9);
-            border: 1px solid var(--terminal-blue);
-            padding: 30px;
-            box-shadow: var(--glow);
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 
         h1 { 
             text-align: center;
-            border-bottom: 2px solid var(--terminal-dark-blue); 
-            padding-bottom: 15px; 
-            text-shadow: var(--glow);
-            letter-spacing: 3px;
+            color: #111827;
+            font-weight: 600;
+            border-bottom: 2px solid #f3f4f6; 
+            padding-bottom: 20px; 
+            margin-bottom: 30px;
         }
 
         .header-info {
             display: flex;
             justify-content: space-between;
-            color: #888;
+            color: #6b7280;
             margin-bottom: 20px;
-            font-size: 0.9em;
+            font-size: 14px;
+            font-weight: 500;
+            background: #f3f4f6;
+            padding: 10px 15px;
+            border-radius: 6px;
         }
 
         table { 
             width: 100%; 
             border-collapse: collapse; 
             margin-top: 20px; 
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
         }
 
         th, td { 
-            border: 1px solid var(--terminal-dark-blue); 
-            padding: 15px; 
+            padding: 15px 20px; 
             text-align: left; 
+            border-bottom: 1px solid #e5e7eb;
         }
 
         th {
-            background: rgba(0, 229, 255, 0.1);
-            color: var(--terminal-blue);
+            background: #f9fafb;
+            color: #4b5563;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 13px;
+            letter-spacing: 0.05em;
         }
 
-        tr:nth-child(even) {
-            background: rgba(0, 229, 255, 0.02);
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background-color: #f9fafb;
+        }
+
+        .product-name {
+            font-weight: 500;
+            color: #1f2937;
         }
 
         .qty-cell {
             text-align: right;
-            font-size: 1.2em;
-            text-shadow: var(--glow);
+            font-size: 16px;
+            font-weight: 600;
+            color: #3b82f6;
         }
 
         .empty-state {
             text-align: center;
             padding: 40px;
-            color: #555;
-            font-style: italic;
+            color: #6b7280;
+        }
+        
+        .badge {
+            background-color: #dcfce7;
+            color: #166534;
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 500;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>[+] LIVE STOCK REPORT [+]</h1>
+        <h1>Live Inventory Report</h1>
         
         <div class="header-info">
-            <span>ID: SECURE_VIEW</span>
+            <span><span class="badge">Live</span> Auto-updating</span>
             <span id="time"></span>
         </div>
 
         <table>
             <thead>
                 <tr>
-                    <th>ITEM_IDENTIFIER</th>
-                    <th style="text-align: right;">UNITS_AVAILABLE</th>
+                    <th>Product Name</th>
+                    <th style="text-align: right;">Units Available</th>
                 </tr>
             </thead>
             <tbody id="reportBody">
-                <tr><td colspan="2" class="empty-state">Establishing connection to database...</td></tr>
+                <tr><td colspan="2" class="empty-state">Connecting to database...</td></tr>
             </tbody>
         </table>
     </div>
 
     <script>
         function updateTime() {
-            document.getElementById('time').innerText = "SYS_TIME: " + new Date().toISOString().replace('T', ' ').substring(0, 19);
+            document.getElementById('time').innerText = "Last Updated: " + new Date().toLocaleTimeString();
         }
-        setInterval(updateTime, 1000);
-        updateTime();
         
         async function loadReport() {
             try {
                 const res = await fetch('/api/inventory');
+                if (!res.ok) throw new Error("API Error");
                 const data = await res.json();
+                
                 const tbody = document.getElementById('reportBody');
                 
                 if(!data || data.length === 0) {
-                    tbody.innerHTML = "<tr><td colspan='2' class='empty-state'>DATABASE IS EMPTY</td></tr>";
+                    tbody.innerHTML = "<tr><td colspan='2' class='empty-state'>No stock data available</td></tr>";
+                    updateTime();
                     return;
                 }
 
@@ -128,18 +150,18 @@
                 data.forEach(item => {
                     tbody.innerHTML += `
                         <tr>
-                            <td>${item.name}</td>
+                            <td class="product-name">${item.name}</td>
                             <td class="qty-cell">${item.quantity}</td>
                         </tr>
                     `;
                 });
+                updateTime();
             } catch (e) {
-                document.getElementById('reportBody').innerHTML = `<tr><td colspan="2" class="empty-state" style="color: red;">ERROR LOADING DATA: ${e.message}</td></tr>`;
+                document.getElementById('reportBody').innerHTML = `<tr><td colspan="2" class="empty-state" style="color: #ef4444;">Failed to load data. API connection issue.</td></tr>`;
             }
         }
         
         loadReport();
-        // Refresh every 10 seconds automatically for users
         setInterval(loadReport, 10000);
     </script>
 </body>
