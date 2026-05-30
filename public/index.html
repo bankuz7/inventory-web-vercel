@@ -4,260 +4,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | Inventory</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-        
-        * {
-            box-sizing: border-box;
-        }
-
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #f3f4f6; 
-            color: #333; 
-            padding: 15px; 
-            margin: 0;
-        }
-
-        .container { 
-            max-width: 900px; 
-            margin: 0 auto; 
-            background: #ffffff;
-            border-radius: 10px;
-            padding: 25px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-
-        .auth-container {
-            max-width: 400px;
-            margin: 100px auto;
-            background: #ffffff;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        h1 { 
-            color: #1f2937;
-            font-size: 22px;
-            font-weight: 600;
-            margin-top: 0;
-        }
-        .auth-container h1 {
-            border: none;
-            margin-bottom: 10px;
-        }
-        
-        .admin-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            border-bottom: 2px solid #e5e7eb; 
-            padding-bottom: 15px; 
-            margin-bottom: 25px;
-        }
-        
-        .admin-profile-pic {
-            width: 60px;
-            height: 60px;
-            min-width: 60px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #3b82f6;
-        }
-        
-        .panel {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 25px;
-        }
-
-        .panel-title {
-            font-weight: 600;
-            color: #4b5563;
-            margin-bottom: 15px;
-            display: block;
-            font-size: 16px;
-        }
-
-        .form-group { 
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        input[type="text"], input[type="number"], input[type="password"] { 
-            background: #ffffff; 
-            border: 1px solid #d1d5db; 
-            border-radius: 6px;
-            color: #1f2937; 
-            padding: 12px 15px; 
-            font-family: 'Inter', sans-serif;
-            font-size: 14px;
-            outline: none;
-            width: 100%;
-            transition: border-color 0.2s;
-        }
-
-        input:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        button { 
-            background: #3b82f6; 
-            color: #ffffff; 
-            border: none;
-            border-radius: 6px;
-            padding: 12px 20px; 
-            cursor: pointer; 
-            font-family: 'Inter', sans-serif;
-            font-weight: 500;
-            font-size: 14px;
-            transition: background-color 0.2s;
-            white-space: nowrap;
-        }
-
-        button:hover { 
-            background: #2563eb; 
-        }
-
-        .btn-delete {
-            background: transparent;
-            color: #ef4444;
-            padding: 6px;
-            border: 1px solid #fca5a5;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 32px;
-            height: 32px;
-        }
-
-        .btn-delete:hover {
-            background: #fee2e2;
-            color: #dc2626;
-            border-color: #ef4444;
-        }
-
-        .table-responsive {
-            width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            border-radius: 6px;
-            border: 1px solid #e5e7eb;
-            background: #ffffff;
-        }
-
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            min-width: 500px;
-        }
-
-        th, td { 
-            border-bottom: 1px solid #e5e7eb; 
-            padding: 15px; 
-            text-align: left; 
-            font-size: 14px;
-        }
-
-        th {
-            background-color: #f9fafb;
-            color: #6b7280;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 12px;
-            letter-spacing: 0.05em;
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        .action-cell {
-            display: flex;
-            align-items: center;
-            gap: 25px;
-        }
-
-        .qty-control {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .qty-cell {
-            font-size: 16px;
-            font-weight: 600;
-            color: #1f2937;
-            min-width: 30px;
-            text-align: center;
-        }
-
-        .btn-qty {
-            background: #f3f4f6;
-            color: #4b5563;
-            border: 1px solid #d1d5db;
-            border-radius: 4px;
-            width: 32px;
-            height: 32px;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            font-weight: bold;
-            transition: all 0.2s;
-        }
-
-        .btn-qty:hover {
-            background: #e5e7eb;
-            color: #1f2937;
-            border-color: #9ca3af;
-        }
-
-        .footer-links {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #e5e7eb;
-            font-size: 14px;
-            color: #6b7280;
-        }
-
+        * { box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #333; padding: 15px; margin: 0; }
+        .container { max-width: 1000px; margin: 0 auto; background: #ffffff; border-radius: 10px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .auth-container { max-width: 400px; margin: 100px auto; background: #ffffff; border-radius: 10px; padding: 30px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); text-align: center; }
+        h1 { color: #1f2937; font-size: 22px; font-weight: 600; margin-top: 0; }
+        .admin-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px; margin-bottom: 25px; }
+        .admin-header-left { display: flex; align-items: center; gap: 15px; }
+        .admin-profile-pic { width: 60px; height: 60px; min-width: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #3b82f6; }
+        .panel { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 25px; }
+        .panel-title { font-weight: 600; color: #4b5563; margin-bottom: 15px; display: block; font-size: 16px; }
+        .form-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        input[type="text"], input[type="number"], input[type="password"], select { background: #ffffff; border: 1px solid #d1d5db; border-radius: 6px; color: #1f2937; padding: 12px 15px; font-family: 'Inter', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; }
+        input:focus, select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        .search-bar { width: 100%; margin-bottom: 15px; padding: 12px 15px; background: #fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%239ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>') no-repeat 15px center; padding-left: 45px; }
+        button { background: #3b82f6; color: #ffffff; border: none; border-radius: 6px; padding: 12px 20px; cursor: pointer; font-family: 'Inter', sans-serif; font-weight: 500; font-size: 14px; transition: background-color 0.2s; white-space: nowrap; }
+        button:hover { background: #2563eb; }
+        .btn-delete { background: transparent; color: #ef4444; padding: 6px; border: 1px solid #fca5a5; border-radius: 4px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; }
+        .btn-delete:hover { background: #fee2e2; color: #dc2626; border-color: #ef4444; }
+        .btn-download { background: #10b981; display: flex; align-items: center; gap: 8px; }
+        .btn-download:hover { background: #059669; }
+        .table-responsive { width: 100%; overflow-x: auto; border-radius: 6px; border: 1px solid #e5e7eb; background: #ffffff; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th, td { border-bottom: 1px solid #e5e7eb; padding: 15px; text-align: left; font-size: 14px; }
+        th { background-color: #f9fafb; color: #6b7280; font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em; }
+        tr:last-child td { border-bottom: none; }
+        .action-cell { display: flex; align-items: center; gap: 20px; }
+        .qty-control { display: flex; align-items: center; gap: 12px; }
+        .qty-cell { font-size: 16px; font-weight: 600; color: #1f2937; min-width: 30px; text-align: center; }
+        .btn-qty { background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; border-radius: 4px; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; transition: all 0.2s; }
+        .btn-qty:hover { background: #e5e7eb; color: #1f2937; border-color: #9ca3af; }
+        .low-stock { color: #dc2626 !important; font-weight: 700 !important; animation: pulse 2s infinite; }
+        .category-tag { background: #e0e7ff; color: #047857; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; }
+        .time-updated { font-size: 11px; color: #9ca3af; display: block; margin-top: 4px; }
+        .footer-links { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 14px; color: #6b7280; }
         a { color: #3b82f6; text-decoration: none; font-weight: 500; }
         a:hover { text-decoration: underline; }
-        
-        #status-msg, #login-error {
-            font-size: 14px;
-            margin-top: 12px;
-            display: block;
-            font-weight: 500;
-            color: #ef4444;
-        }
-
+        #status-msg, #login-error { font-size: 14px; margin-top: 12px; display: block; font-weight: 500; color: #ef4444; }
         #dashboard { display: none; }
-
-        @media (max-width: 600px) {
-            .form-group { flex-direction: column; align-items: stretch; }
-            #itemQty { width: 100% !important; }
-            .btn-add { width: 100%; padding: 14px; }
-            .container { padding: 15px; }
-            .footer-links { flex-direction: column; gap: 15px; text-align: center; }
-            .action-cell { flex-direction: row; justify-content: space-between; }
-        }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        @media (max-width: 768px) { .form-group { flex-direction: column; align-items: stretch; } .form-group > * { width: 100%; } .admin-header { flex-direction: column; align-items: flex-start; gap: 15px; } .btn-download { width: 100%; justify-content: center; } }
     </style>
 </head>
 <body>
-
-    <!-- LOGIN SCREEN -->
     <div id="login-screen" class="auth-container">
         <h1>Admin Login</h1>
         <p style="color: #6b7280; margin-bottom: 25px; font-size: 14px;">Enter PIN to access inventory controls.</p>
@@ -268,31 +60,48 @@
         <span id="login-error"></span>
     </div>
 
-    <!-- MAIN DASHBOARD -->
     <div id="dashboard" class="container">
         <div class="admin-header">
-            <img src="admin-profile.jpg" alt="Admin" class="admin-profile-pic">
-            <h1 style="border-bottom: none; padding-bottom: 0; margin-bottom: 0;">Admin Control Panel</h1>
+            <div class="admin-header-left">
+                <img src="admin-profile.jpg" alt="Admin" class="admin-profile-pic">
+                <h1 style="margin: 0;">Admin Control Panel</h1>
+            </div>
+            <button class="btn-download" onclick="exportToExcel()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Export Excel
+            </button>
         </div>
         
         <div class="panel">
             <span class="panel-title">Add New Item</span>
             <div class="form-group">
-                <input type="text" id="itemName" placeholder="Enter item name (e.g., Laptop)">
-                <input type="number" id="itemQty" placeholder="Qty" value="0" style="width: 120px;">
-                <button class="btn-add" onclick="addItem()">Add to Inventory</button>
+                <input type="text" id="itemName" placeholder="Item Name (e.g., Rice)" style="flex: 2;">
+                <select id="itemCategory" style="flex: 1;">
+                    <option value="General">General</option>
+                    <option value="Spices">Spices</option>
+                    <option value="Vegetables">Vegetables</option>
+                    <option value="Meat">Meat</option>
+                    <option value="Drinks">Drinks</option>
+                    <option value="Packaging">Packaging</option>
+                </select>
+                <input type="number" id="itemQty" placeholder="Qty" value="0" style="flex: 1;">
+                <button class="btn-add" onclick="addItem()" style="flex: 1;">Add Item</button>
             </div>
             <span id="status-msg"></span>
         </div>
 
         <div class="panel" style="background: #ffffff; padding: 0; border: none;">
-            <span class="panel-title" style="padding: 0 5px;">Current Stock Level</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 5px; margin-bottom: 10px;">
+                <span class="panel-title" style="margin: 0;">Current Stock Level</span>
+            </div>
+            <input type="text" id="searchInput" class="search-bar" placeholder="Search products..." onkeyup="filterTable()">
+            
             <div class="table-responsive">
-                <table>
+                <table id="inventoryTable">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Product Name</th>
+                            <th>Product Details</th>
+                            <th>Quantity</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -311,6 +120,7 @@
 
     <script>
         let savedPin = sessionStorage.getItem('adminPin');
+        let globalData = [];
 
         function checkAuth() {
             if (savedPin) {
@@ -325,171 +135,150 @@
 
         function login() {
             const pin = document.getElementById('adminPin').value;
-            if(!pin) {
-                document.getElementById('login-error').innerText = "Please enter a PIN";
-                return;
-            }
+            if(!pin) { document.getElementById('login-error').innerText = "Please enter a PIN"; return; }
             sessionStorage.setItem('adminPin', pin);
             savedPin = pin;
             checkAuth();
         }
 
-        function logout() {
-            sessionStorage.removeItem('adminPin');
-            savedPin = null;
-            document.getElementById('adminPin').value = '';
-            checkAuth();
+        function logout() { sessionStorage.removeItem('adminPin'); savedPin = null; document.getElementById('adminPin').value = ''; checkAuth(); }
+        function getHeaders() { return { 'Content-Type': 'application/json', 'x-admin-pin': savedPin }; }
+
+        function formatDate(dateStr) {
+            if(!dateStr) return "Never updated";
+            const d = new Date(dateStr);
+            return d.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
         }
 
-        // Add headers helper
-        function getHeaders() {
-            return { 
-                'Content-Type': 'application/json',
-                'x-admin-pin': savedPin
-            };
+        function renderTable(data) {
+            const tbody = document.getElementById('inventoryBody');
+            tbody.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: #6b7280; padding: 30px;">No items found.</td></tr>';
+                return;
+            }
+            
+            data.forEach(item => {
+                const isLow = item.quantity <= 5;
+                const qtyClass = isLow ? 'qty-cell low-stock' : 'qty-cell';
+                const cat = item.category || 'General';
+                const timeStr = formatDate(item.updated_at);
+                
+                tbody.innerHTML += `
+                    <tr id="row-${item.id}" class="item-row">
+                        <td>
+                            <div style="font-weight: 500; color:#1f2937; margin-bottom: 4px;">${item.name}</div>
+                            <span class="category-tag">${cat}</span>
+                            <span class="time-updated">Updated: <span id="time-${item.id}">${timeStr}</span></span>
+                        </td>
+                        <td>
+                            <div class="qty-control">
+                                <button class="btn-qty" onclick="updateQty(${item.id}, -1)">−</button>
+                                <span class="${qtyClass}" id="qty-${item.id}">${item.quantity}</span>
+                                <button class="btn-qty" onclick="updateQty(${item.id}, 1)">+</button>
+                            </div>
+                            ${isLow ? '<span style="color:#dc2626; font-size:10px; display:block; margin-top:5px; font-weight:600;">Low Stock!</span>' : ''}
+                        </td>
+                        <td>
+                            <button class="btn-delete" onclick="deleteItem(${item.id}, '${item.name.replace(/'/g, "\\'")}')" title="Delete">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
         }
 
         async function loadInventory() {
             try {
-                // Anyone can fetch, no PIN needed for GET
                 const res = await fetch('/api/inventory');
                 if (!res.ok) throw new Error("Failed to fetch data");
-                const data = await res.json();
-                
-                const tbody = document.getElementById('inventoryBody');
-                tbody.innerHTML = '';
-                
-                if (!data || data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: #6b7280; padding: 30px;">No items found. Add one above.</td></tr>';
-                    return;
-                }
-                
-                data.forEach(item => {
-                    tbody.innerHTML += `
-                        <tr id="row-${item.id}">
-                            <td style="color:#6b7280; width: 60px;">#${item.id}</td>
-                            <td style="font-weight: 500; color:#1f2937;">${item.name}</td>
-                            <td>
-                                <div class="action-cell">
-                                    <div class="qty-control">
-                                        <button class="btn-qty" onclick="updateQty(${item.id}, -1)">−</button>
-                                        <span class="qty-cell" id="qty-${item.id}">${item.quantity}</span>
-                                        <button class="btn-qty" onclick="updateQty(${item.id}, 1)">+</button>
-                                    </div>
-                                    <button class="btn-delete" onclick="deleteItem(${item.id}, '${item.name.replace(/'/g, "\\'")}')" title="Delete product">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
-                });
+                globalData = await res.json();
+                renderTable(globalData);
+                filterTable();
             } catch (e) {
-                document.getElementById('inventoryBody').innerHTML = `<tr><td colspan="3" style="text-align:center; color: #ef4444; padding: 30px; font-weight: 500;">API Error: ${e.message}</td></tr>`;
+                document.getElementById('inventoryBody').innerHTML = `<tr><td colspan="3" style="text-align:center; color: #ef4444; padding: 30px;">API Error: ${e.message}</td></tr>`;
             }
+        }
+
+        function filterTable() {
+            const input = document.getElementById("searchInput").value.toLowerCase();
+            const filtered = globalData.filter(item => 
+                item.name.toLowerCase().includes(input) || 
+                (item.category && item.category.toLowerCase().includes(input))
+            );
+            renderTable(filtered);
         }
 
         async function addItem() {
             const name = document.getElementById('itemName').value;
             const qty = document.getElementById('itemQty').value;
+            const cat = document.getElementById('itemCategory').value;
             const status = document.getElementById('status-msg');
             
-            if(!name) {
-                status.innerText = "Please enter an item name.";
-                status.style.color = "#ef4444";
-                return;
-            }
-            
-            status.innerText = "Processing...";
-            status.style.color = "#3b82f6";
+            if(!name) { status.innerText = "Please enter an item name."; status.style.color = "#ef4444"; return; }
+            status.innerText = "Processing..."; status.style.color = "#3b82f6";
             
             try {
                 const res = await fetch('/api/inventory', {
-                    method: 'POST',
-                    headers: getHeaders(),
-                    body: JSON.stringify({ name, quantity: qty })
+                    method: 'POST', headers: getHeaders(),
+                    body: JSON.stringify({ name, quantity: qty, category: cat })
                 });
-                
-                if (res.status === 401) {
-                    logout();
-                    alert("Invalid PIN. Please login again.");
-                    return;
-                }
-                
+                if (res.status === 401) { logout(); return; }
                 if (!res.ok) throw new Error("Failed to add item.");
                 
                 document.getElementById('itemName').value = '';
                 document.getElementById('itemQty').value = '0';
-                status.innerText = "Item added successfully!";
-                status.style.color = "#10b981";
+                status.innerText = "Item added!"; status.style.color = "#10b981";
                 setTimeout(() => status.innerText = "", 3000);
-                
                 loadInventory();
-            } catch (e) {
-                status.style.color = "#ef4444";
-                status.innerText = "Error: " + e.message;
-            }
+            } catch (e) { status.style.color = "#ef4444"; status.innerText = "Error: " + e.message; }
         }
 
         async function updateQty(id, delta) {
             const qtyElement = document.getElementById(`qty-${id}`);
             const originalQty = parseInt(qtyElement.innerText);
-            
             qtyElement.innerText = "...";
-            
             try {
                 const res = await fetch(`/api/inventory/${id}/update`, {
-                    method: 'POST',
-                    headers: getHeaders(),
-                    body: JSON.stringify({ delta })
+                    method: 'POST', headers: getHeaders(), body: JSON.stringify({ delta })
                 });
-                
-                if (res.status === 401) {
-                    logout();
-                    alert("Invalid PIN. Please login again.");
-                    return;
-                }
-                
+                if (res.status === 401) { logout(); return; }
                 if (!res.ok) throw new Error("Update failed");
-                
                 const data = await res.json();
-                qtyElement.innerText = data.newQuantity;
-            } catch (e) {
-                alert("Error: " + e.message);
-                qtyElement.innerText = originalQty;
-            }
+                loadInventory(); 
+            } catch (e) { alert("Error: " + e.message); qtyElement.innerText = originalQty; }
         }
 
         async function deleteItem(id, name) {
-            if(!confirm(`Are you sure you want to completely delete "${name}" from inventory?`)) {
-                return;
-            }
-
+            if(!confirm(`Are you sure you want to completely delete "${name}"?`)) return;
             const row = document.getElementById(`row-${id}`);
             row.style.opacity = '0.5';
-
             try {
-                const res = await fetch(`/api/inventory/${id}`, {
-                    method: 'DELETE',
-                    headers: getHeaders()
-                });
-                
-                if (res.status === 401) {
-                    logout();
-                    alert("Invalid PIN. Please login again.");
-                    return;
-                }
-                
+                const res = await fetch(`/api/inventory/${id}`, { method: 'DELETE', headers: getHeaders() });
+                if (res.status === 401) { logout(); return; }
                 if (!res.ok) throw new Error("Delete failed");
-                
                 loadInventory();
-            } catch (e) {
-                alert("Error: " + e.message);
-                row.style.opacity = '1';
-            }
+            } catch (e) { alert("Error: " + e.message); row.style.opacity = '1'; }
         }
 
-        // Init
+        function exportToExcel() {
+            if(globalData.length === 0) { alert("No data to export!"); return; }
+            const exportData = globalData.map(item => ({
+                ID: item.id,
+                Product: item.name,
+                Category: item.category || 'General',
+                Quantity: item.quantity,
+                Status: item.quantity <= 5 ? 'Low Stock' : 'OK',
+                Last_Updated: item.updated_at ? new Date(item.updated_at).toLocaleString() : 'N/A'
+            }));
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Inventory");
+            XLSX.writeFile(wb, `Inventory_Report_${new Date().toLocaleDateString().replace(/\//g, '-')}.xlsx`);
+        }
+
         checkAuth();
     </script>
 </body>

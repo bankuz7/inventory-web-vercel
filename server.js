@@ -3,72 +3,100 @@ const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
-const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY; // server-only secret
+
 const ADMIN_PIN = process.env.ADMIN_PIN || '9712';
 
-const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseKey || 'placeholder');
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  // fail fast with a helpful message
+  console.error('Missing SUPABASE_URL / SUPABASE_ANON_KEY environment variables');
+}
 
-// Middleware to check Admin PIN
+// Public client (used for report page reads)
+const supabasePublic = createClient(
+  SUPABASE_URL || 'https://placeholder.supabase.co',
+  SUPABASE_ANON_KEY || 'placeholder',
+  { auth: { persistSession: false } }
+);
+
+// Admin client (used ONLY for writes). Service role bypasses RLS.
+const supabaseAdmin = createClient(
+  SUPABASE_URL || 'https://placeholder.supabase.co',
+  SUPABASE_SERVICE_ROLE_KEY || 'missing-service-role-key',
+  { auth: { persistSession: false } }
+);
+
 const requirePin = (req, res, next) => {
   const pin = req.headers['x-admin-pin'];
   if (pin !== ADMIN_PIN) {
-    return res.status(401).json({ error: "Unauthorized: Invalid or missing Admin PIN" });
+    return res.status(401).json({ error: 'Unauthorized: Invalid or missing Admin PIN' });
+  }
+  if (!SUPABASE_SERVICE_ROLE_KEY) {
+    return res.status(500).json({
+      error: 'Server not configured: missing SUPABASE_SERVICE_ROLE_KEY in Vercel Environment Variables.'
+    });
   }
   next();
 };
 
-// Get all inventory (Report) - PUBLIC (No PIN required)
+// PUBLIC: Get all inventory for report
 app.get('/api/inventory', async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabasePublic
       .from('inventory')
       .select('*')
       .order('id', { ascending: true });
 
     if (error) throw error;
-    res.json(data);
+    res.json(data || []);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Add new item - PROTECTED (PIN required)
+// ADMIN: Add new item
 app.post('/api/inventory', requirePin, async (req, res) => {
   try {
-    const { name, quantity } = req.body;
-    const qty = parseInt(quantity, 10) || 0;
-    
-    const { data, error } = await supabase
+    const { name, quantity, category } = req.body;
+
+    if (!name || String(name).trim().length === 0) {
+      return res.status(400).json({ error: 'Item name is required' });
+    }
+
+    const qty = Number.isFinite(Number(quantity)) ? parseInt(quantity, 10) : 0;
+    const cat = (category && String(category).trim().length) ? String(category).trim() : 'General';
+    const now = new Date().toISOString();
+
+    const { data, error } = await supabaseAdmin
       .from('inventory')
-      .insert([{ name, quantity: qty }])
+      .insert([{ name: String(name).trim(), quantity: qty, category: cat, updated_at: now }])
       .select();
 
     if (error) throw error;
-    res.json(data[0]);
+    res.json(data?.[0] || null);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
-// Update quantity (+ or -) - PROTECTED (PIN required)
+// ADMIN: Update quantity (+/-)
 app.post('/api/inventory/:id/update', requirePin, async (req, res) => {
   try {
     const delta = parseInt(req.body.delta, 10);
     const id = parseInt(req.params.id, 10);
 
-    if (isNaN(delta) || isNaN(id)) {
-      return res.status(400).json({ error: "Invalid ID or delta" });
+    if (!Number.isFinite(delta) || !Number.isFinite(id)) {
+      return res.status(400).json({ error: 'Invalid ID or delta' });
     }
 
-    // Fetch current quantity
-    const { data: currentData, error: fetchError } = await supabase
+    const { data: currentData, error: fetchError } = await supabaseAdmin
       .from('inventory')
       .select('quantity')
       .eq('id', id)
@@ -76,36 +104,32 @@ app.post('/api/inventory/:id/update', requirePin, async (req, res) => {
 
     if (fetchError) throw fetchError;
 
-    // Calculate new quantity
-    const newQty = (currentData.quantity || 0) + delta;
+    const newQty = (currentData?.quantity || 0) + delta;
+    const now = new Date().toISOString();
 
-    // Update in database
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('inventory')
-      .update({ quantity: newQty })
+      .update({ quantity: newQty, updated_at: now })
       .eq('id', id)
       .select();
 
     if (error) throw error;
-    res.json({ updated: 1, newQuantity: data[0].quantity });
+    res.json({ updated: 1, newQuantity: data?.[0]?.quantity ?? newQty, updated_at: now });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
-// Delete item - PROTECTED (PIN required)
+// ADMIN: Delete item
 app.delete('/api/inventory/:id', requirePin, async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: "Invalid ID" });
-    }
+    if (!Number.isFinite(id)) return res.status(400).json({ error: 'Invalid ID' });
 
-    const { data, error } = await supabase
+    const { error } = await supabaseAdmin
       .from('inventory')
       .delete()
-      .eq('id', id)
-      .select();
+      .eq('id', id);
 
     if (error) throw error;
     res.json({ deleted: true });
@@ -114,5 +138,4 @@ app.delete('/api/inventory/:id', requirePin, async (req, res) => {
   }
 });
 
-// Export for Vercel
 module.exports = app;
