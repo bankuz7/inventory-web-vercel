@@ -3,94 +3,306 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventory Management | System</title>
+    <title>HACKER INVENTORY // SYSTEM</title>
     <style>
-        body { font-family: 'Courier New', Courier, monospace; background-color: #0a0a0a; color: #00ff00; padding: 20px; }
-        .container { max-width: 800px; margin: auto; }
-        h1 { border-bottom: 1px solid #00ff00; padding-bottom: 10px; }
-        .form-group { margin-bottom: 20px; }
-        input[type="text"], input[type="number"] { background: #1a1a1a; border: 1px solid #00ff00; color: #00ff00; padding: 5px; }
-        button { background: #004400; color: #00ff00; border: 1px solid #00ff00; padding: 5px 10px; cursor: pointer; }
-        button:hover { background: #00ff00; color: #000; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #00ff00; padding: 10px; text-align: left; }
-        .actions button { margin-right: 5px; }
-        .report-link { display: inline-block; margin-top: 20px; color: #00ff00; text-decoration: underline; }
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        
+        :root {
+            --bg-color: #050505;
+            --terminal-green: #00ff41;
+            --terminal-dark-green: #003b00;
+            --terminal-red: #ff003c;
+            --glow: 0 0 10px rgba(0, 255, 65, 0.5);
+            --red-glow: 0 0 10px rgba(255, 0, 60, 0.5);
+        }
+
+        body { 
+            font-family: 'Share Tech Mono', monospace; 
+            background-color: var(--bg-color); 
+            color: var(--terminal-green); 
+            padding: 20px; 
+            margin: 0;
+            background-image: linear-gradient(rgba(0, 255, 65, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 255, 65, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .container { 
+            max-width: 900px; 
+            margin: 20px auto; 
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--terminal-green);
+            padding: 30px;
+            box-shadow: var(--glow);
+            position: relative;
+        }
+
+        .container::before {
+            content: "SYSTEM_ACCESS_GRANTED";
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: var(--bg-color);
+            padding: 0 10px;
+            font-size: 0.8em;
+        }
+
+        h1 { 
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 2px dashed var(--terminal-dark-green); 
+            padding-bottom: 15px; 
+            margin-bottom: 30px;
+            text-shadow: var(--glow);
+        }
+
+        .panel {
+            border: 1px solid var(--terminal-dark-green);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .panel-title {
+            color: #aaa;
+            margin-top: -30px;
+            background: var(--bg-color);
+            display: inline-block;
+            padding: 0 10px;
+        }
+
+        .form-group { 
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        input[type="text"], input[type="number"] { 
+            background: rgba(0, 20, 0, 0.5); 
+            border: 1px solid var(--terminal-green); 
+            color: var(--terminal-green); 
+            padding: 12px; 
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.1em;
+            outline: none;
+            width: 100%;
+        }
+
+        input:focus {
+            box-shadow: inset 0 0 5px var(--terminal-green);
+        }
+
+        button { 
+            background: transparent; 
+            color: var(--terminal-green); 
+            border: 1px solid var(--terminal-green); 
+            padding: 12px 20px; 
+            cursor: pointer; 
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+
+        button:hover { 
+            background: var(--terminal-green); 
+            color: var(--bg-color); 
+            box-shadow: var(--glow);
+        }
+
+        .btn-add { flex-shrink: 0; }
+
+        .btn-inc { color: var(--terminal-green); border-color: var(--terminal-green); padding: 5px 15px; }
+        .btn-dec { color: var(--terminal-red); border-color: var(--terminal-red); padding: 5px 15px; }
+        .btn-inc:hover { background: var(--terminal-green); color: black; box-shadow: var(--glow); }
+        .btn-dec:hover { background: var(--terminal-red); color: white; box-shadow: var(--red-glow); }
+
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 10px; 
+        }
+
+        th, td { 
+            border-bottom: 1px solid var(--terminal-dark-green); 
+            padding: 15px 10px; 
+            text-align: left; 
+        }
+
+        th {
+            color: #888;
+            font-weight: normal;
+        }
+
+        tr:hover {
+            background: rgba(0, 255, 65, 0.05);
+        }
+
+        .qty-cell {
+            font-size: 1.2em;
+            font-weight: bold;
+            text-shadow: var(--glow);
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            border-top: 1px dashed var(--terminal-dark-green);
+            padding-top: 20px;
+        }
+
+        a { 
+            color: var(--terminal-green); 
+            text-decoration: none; 
+        }
+        a:hover {
+            text-decoration: underline;
+            text-shadow: var(--glow);
+        }
+        
+        #status-msg {
+            color: var(--terminal-red);
+            font-size: 0.9em;
+            margin-top: 10px;
+            display: block;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>[+] INVENTORY CONTROL SYSTEM</h1>
+        <h1>// ROOT INVENTORY CONTROL //</h1>
         
-        <div class="form-group">
-            <h3>ADD NEW ITEM</h3>
-            <input type="text" id="itemName" placeholder="Item Name">
-            <input type="number" id="itemQty" placeholder="Initial Qty" value="0">
-            <button onclick="addItem()">[ EXECUTE ADD ]</button>
+        <div class="panel">
+            <span class="panel-title">[ NEW ENTRY ]</span>
+            <div class="form-group">
+                <input type="text" id="itemName" placeholder="> Enter Item Name_">
+                <input type="number" id="itemQty" placeholder="QTY" value="0" style="width: 100px;">
+                <button class="btn-add" onclick="addItem()">EXECUTE</button>
+            </div>
+            <span id="status-msg"></span>
         </div>
 
-        <h3>CURRENT STOCK</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>ITEM NAME</th>
-                    <th>QUANTITY</th>
-                    <th>ACTIONS (+ / -)</th>
-                </tr>
-            </thead>
-            <tbody id="inventoryBody">
-                <!-- Data will load here -->
-            </tbody>
-        </table>
+        <div class="panel">
+            <span class="panel-title">[ DATABASE RECORDS ]</span>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID_REF</th>
+                        <th>ITEM_IDENTIFIER</th>
+                        <th>STOCK_LEVEL</th>
+                        <th>MANIPULATE</th>
+                    </tr>
+                </thead>
+                <tbody id="inventoryBody">
+                    <tr><td colspan="4" style="text-align:center; color: #555;">Loading database...</td></tr>
+                </tbody>
+            </table>
+        </div>
         
-        <a href="report.html" class="report-link" target="_blank">[ VIEW PUBLIC REPORT ]</a>
+        <div class="footer-links">
+            <span>STATUS: <span style="text-shadow: var(--glow);">ONLINE</span></span>
+            <a href="report.html" target="_blank">[ ACCESS PUBLIC REPORT ]</a>
+        </div>
     </div>
 
     <script>
         async function loadInventory() {
-            const res = await fetch('/api/inventory');
-            const data = await res.json();
-            const tbody = document.getElementById('inventoryBody');
-            tbody.innerHTML = '';
-            
-            data.forEach(item => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${item.id}</td>
-                        <td>${item.name}</td>
-                        <td id="qty-${item.id}">${item.quantity}</td>
-                        <td class="actions">
-                            <button onclick="updateQty(${item.id}, 1)">[ +1 ]</button>
-                            <button onclick="updateQty(${item.id}, -1)">[ -1 ]</button>
-                        </td>
-                    </tr>
-                `;
-            });
+            try {
+                const res = await fetch('/api/inventory');
+                if (!res.ok) throw new Error("API Connection Failed");
+                const data = await res.json();
+                
+                const tbody = document.getElementById('inventoryBody');
+                tbody.innerHTML = '';
+                
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: #555;">NO RECORDS FOUND IN DATABASE</td></tr>';
+                    return;
+                }
+                
+                data.forEach(item => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="color:#666;">#${item.id}</td>
+                            <td style="font-size: 1.1em;">${item.name}</td>
+                            <td class="qty-cell" id="qty-${item.id}">${item.quantity}</td>
+                            <td class="actions">
+                                <button class="btn-inc" onclick="updateQty(${item.id}, 1)">+ 1</button>
+                                <button class="btn-dec" onclick="updateQty(${item.id}, -1)">- 1</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (e) {
+                document.getElementById('status-msg').innerText = "ERROR: " + e.message;
+            }
         }
 
         async function addItem() {
             const name = document.getElementById('itemName').value;
             const qty = document.getElementById('itemQty').value;
-            if(!name) return alert('Enter item name');
+            const status = document.getElementById('status-msg');
             
-            await fetch('/api/inventory', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, quantity: qty })
-            });
+            if(!name) {
+                status.innerText = "ERROR: Item name is required.";
+                return;
+            }
             
-            document.getElementById('itemName').value = '';
-            loadInventory();
+            status.innerText = "Processing...";
+            
+            try {
+                const res = await fetch('/api/inventory', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, quantity: qty })
+                });
+                
+                if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.error || "Failed to add item");
+                }
+                
+                document.getElementById('itemName').value = '';
+                status.innerText = "";
+                loadInventory();
+            } catch (e) {
+                status.innerText = "ERROR: " + e.message;
+            }
         }
 
         async function updateQty(id, delta) {
-            await fetch(`/api/inventory/${id}/update`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ delta })
-            });
-            loadInventory();
+            const qtyElement = document.getElementById(`qty-${id}`);
+            const originalQty = parseInt(qtyElement.innerText);
+            
+            // Optimistic UI update
+            qtyElement.innerText = originalQty + delta;
+            qtyElement.style.color = "yellow";
+            
+            try {
+                const res = await fetch(`/api/inventory/${id}/update`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ delta })
+                });
+                
+                if (!res.ok) throw new Error("Failed to update");
+                const data = await res.json();
+                
+                // Confirm update from server
+                qtyElement.innerText = data.newQuantity;
+                qtyElement.style.color = "var(--terminal-green)";
+            } catch (e) {
+                // Revert if failed
+                qtyElement.innerText = originalQty;
+                qtyElement.style.color = "var(--terminal-red)";
+                setTimeout(() => qtyElement.style.color = "var(--terminal-green)", 2000);
+            }
         }
 
         loadInventory();

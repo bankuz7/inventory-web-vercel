@@ -3,56 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventory Report</title>
+    <title>REPORT // SYSTEM</title>
     <style>
-        body { font-family: 'Courier New', Courier, monospace; background-color: #0a0a0a; color: #00ff00; padding: 20px; }
-        .container { max-width: 800px; margin: auto; }
-        h1 { border-bottom: 1px dashed #00ff00; padding-bottom: 10px; text-align: center; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #00ff00; padding: 10px; text-align: left; }
-        .timestamp { text-align: right; font-size: 0.8em; margin-bottom: 10px; }
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        
+        :root {
+            --bg-color: #000;
+            --terminal-blue: #00e5ff;
+            --terminal-dark-blue: #003344;
+            --glow: 0 0 10px rgba(0, 229, 255, 0.5);
+        }
+
+        body { 
+            font-family: 'Share Tech Mono', monospace; 
+            background-color: var(--bg-color); 
+            color: var(--terminal-blue); 
+            padding: 20px; 
+            margin: 0;
+            background-image: radial-gradient(circle, rgba(0, 229, 255, 0.1) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        .container { 
+            max-width: 800px; 
+            margin: 40px auto; 
+            background: rgba(0, 10, 15, 0.9);
+            border: 1px solid var(--terminal-blue);
+            padding: 30px;
+            box-shadow: var(--glow);
+        }
+
+        h1 { 
+            text-align: center;
+            border-bottom: 2px solid var(--terminal-dark-blue); 
+            padding-bottom: 15px; 
+            text-shadow: var(--glow);
+            letter-spacing: 3px;
+        }
+
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            color: #888;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px; 
+        }
+
+        th, td { 
+            border: 1px solid var(--terminal-dark-blue); 
+            padding: 15px; 
+            text-align: left; 
+        }
+
+        th {
+            background: rgba(0, 229, 255, 0.1);
+            color: var(--terminal-blue);
+        }
+
+        tr:nth-child(even) {
+            background: rgba(0, 229, 255, 0.02);
+        }
+
+        .qty-cell {
+            text-align: right;
+            font-size: 1.2em;
+            text-shadow: var(--glow);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #555;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>[ SYSTEM REPORT ] - INVENTORY STATUS</h1>
-        <div class="timestamp" id="time"></div>
+        <h1>[+] LIVE STOCK REPORT [+]</h1>
+        
+        <div class="header-info">
+            <span>ID: SECURE_VIEW</span>
+            <span id="time"></span>
+        </div>
+
         <table>
             <thead>
                 <tr>
-                    <th>ITEM NAME</th>
-                    <th>STOCK AVAILABLE</th>
+                    <th>ITEM_IDENTIFIER</th>
+                    <th style="text-align: right;">UNITS_AVAILABLE</th>
                 </tr>
             </thead>
             <tbody id="reportBody">
-                <!-- Data will load here -->
+                <tr><td colspan="2" class="empty-state">Establishing connection to database...</td></tr>
             </tbody>
         </table>
     </div>
 
     <script>
-        document.getElementById('time').innerText = "GENERATED: " + new Date().toLocaleString();
+        function updateTime() {
+            document.getElementById('time').innerText = "SYS_TIME: " + new Date().toISOString().replace('T', ' ').substring(0, 19);
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
         
         async function loadReport() {
-            const res = await fetch('/api/inventory');
-            const data = await res.json();
-            const tbody = document.getElementById('reportBody');
-            
-            if(data.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='2'>NO DATA FOUND</td></tr>";
-                return;
-            }
+            try {
+                const res = await fetch('/api/inventory');
+                const data = await res.json();
+                const tbody = document.getElementById('reportBody');
+                
+                if(!data || data.length === 0) {
+                    tbody.innerHTML = "<tr><td colspan='2' class='empty-state'>DATABASE IS EMPTY</td></tr>";
+                    return;
+                }
 
-            data.forEach(item => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${item.name}</td>
-                        <td>${item.quantity}</td>
-                    </tr>
-                `;
-            });
+                tbody.innerHTML = '';
+                data.forEach(item => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${item.name}</td>
+                            <td class="qty-cell">${item.quantity}</td>
+                        </tr>
+                    `;
+                });
+            } catch (e) {
+                document.getElementById('reportBody').innerHTML = `<tr><td colspan="2" class="empty-state" style="color: red;">ERROR LOADING DATA: ${e.message}</td></tr>`;
+            }
         }
+        
         loadReport();
+        // Refresh every 10 seconds automatically for users
+        setInterval(loadReport, 10000);
     </script>
 </body>
 </html>

@@ -12,66 +12,76 @@ app.use(express.static('public'));
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseKey) {
-  console.log("WARNING: Supabase URL or Key is missing. App will fail to connect.");
-}
-
 const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseKey || 'placeholder');
 
 // Get all inventory (Report)
 app.get('/api/inventory', async (req, res) => {
-  const { data, error } = await supabase
-    .from('inventory')
-    .select('*')
-    .order('id', { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from('inventory')
+      .select('*')
+      .order('id', { ascending: false });
 
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Add new item
 app.post('/api/inventory', async (req, res) => {
-  const { name, quantity } = req.body;
-  const qty = quantity || 0;
-  
-  const { data, error } = await supabase
-    .from('inventory')
-    .insert([{ name, quantity: qty }])
-    .select();
+  try {
+    const { name, quantity } = req.body;
+    const qty = parseInt(quantity, 10) || 0;
+    
+    const { data, error } = await supabase
+      .from('inventory')
+      .insert([{ name, quantity: qty }])
+      .select();
 
-  if (error) return res.status(400).json({ error: error.message });
-  res.json(data[0]);
+    if (error) throw error;
+    res.json(data[0]);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 // Update quantity (+ or -)
 app.post('/api/inventory/:id/update', async (req, res) => {
-  const { delta } = req.body;
-  const id = req.params.id;
+  try {
+    const delta = parseInt(req.body.delta, 10);
+    const id = parseInt(req.params.id, 10);
 
-  // Supabase doesn't have a simple "increment" via REST API directly without RPC,
-  // so we fetch current, modify, and update.
-  const { data: currentData, error: fetchError } = await supabase
-    .from('inventory')
-    .select('quantity')
-    .eq('id', id)
-    .single();
+    if (isNaN(delta) || isNaN(id)) {
+      return res.status(400).json({ error: "Invalid ID or delta" });
+    }
 
-  if (fetchError) return res.status(400).json({ error: fetchError.message });
+    // Fetch current quantity
+    const { data: currentData, error: fetchError } = await supabase
+      .from('inventory')
+      .select('quantity')
+      .eq('id', id)
+      .single();
 
-  const newQty = currentData.quantity + delta;
+    if (fetchError) throw fetchError;
 
-  const { data, error } = await supabase
-    .from('inventory')
-    .update({ quantity: newQty })
-    .eq('id', id)
-    .select();
+    // Calculate new quantity
+    const newQty = (currentData.quantity || 0) + delta;
 
-  if (error) return res.status(400).json({ error: error.message });
-  res.json({ updated: 1, newQuantity: data[0].quantity });
+    // Update in database
+    const { data, error } = await supabase
+      .from('inventory')
+      .update({ quantity: newQty })
+      .eq('id', id)
+      .select();
+
+    if (error) throw error;
+    res.json({ updated: 1, newQuantity: data[0].quantity });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
-app.listen(port, () => {
-  console.log(`[+] Inventory System online on port ${port}`);
-});
-
+// Export for Vercel
 module.exports = app;
