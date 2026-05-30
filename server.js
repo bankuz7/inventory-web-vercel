@@ -93,5 +93,26 @@ app.post('/api/inventory/:id/update', requirePin, async (req, res) => {
   }
 });
 
+// Delete item - PROTECTED (PIN required)
+app.delete('/api/inventory/:id', requirePin, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "Invalid ID" });
+    }
+
+    const { data, error } = await supabase
+      .from('inventory')
+      .delete()
+      .eq('id', id)
+      .select();
+
+    if (error) throw error;
+    res.json({ deleted: true });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // Export for Vercel
 module.exports = app;

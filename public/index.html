@@ -111,6 +111,25 @@
             background: #2563eb; 
         }
 
+        .btn-delete {
+            background: transparent;
+            color: #ef4444;
+            padding: 6px;
+            border: 1px solid #fca5a5;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+        }
+
+        .btn-delete:hover {
+            background: #fee2e2;
+            color: #dc2626;
+            border-color: #ef4444;
+        }
+
         .table-responsive {
             width: 100%;
             overflow-x: auto;
@@ -144,6 +163,12 @@
 
         tr:last-child td {
             border-bottom: none;
+        }
+
+        .action-cell {
+            display: flex;
+            align-items: center;
+            gap: 25px;
         }
 
         .qty-control {
@@ -212,6 +237,7 @@
             .btn-add { width: 100%; padding: 14px; }
             .container { padding: 15px; }
             .footer-links { flex-direction: column; gap: 15px; text-align: center; }
+            .action-cell { flex-direction: row; justify-content: space-between; }
         }
     </style>
 </head>
@@ -250,7 +276,7 @@
                         <tr>
                             <th>ID</th>
                             <th>Product Name</th>
-                            <th>Quantity</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="inventoryBody">
@@ -323,14 +349,19 @@
                 
                 data.forEach(item => {
                     tbody.innerHTML += `
-                        <tr>
+                        <tr id="row-${item.id}">
                             <td style="color:#6b7280; width: 60px;">#${item.id}</td>
                             <td style="font-weight: 500; color:#1f2937;">${item.name}</td>
                             <td>
-                                <div class="qty-control">
-                                    <button class="btn-qty" onclick="updateQty(${item.id}, -1)">−</button>
-                                    <span class="qty-cell" id="qty-${item.id}">${item.quantity}</span>
-                                    <button class="btn-qty" onclick="updateQty(${item.id}, 1)">+</button>
+                                <div class="action-cell">
+                                    <div class="qty-control">
+                                        <button class="btn-qty" onclick="updateQty(${item.id}, -1)">−</button>
+                                        <span class="qty-cell" id="qty-${item.id}">${item.quantity}</span>
+                                        <button class="btn-qty" onclick="updateQty(${item.id}, 1)">+</button>
+                                    </div>
+                                    <button class="btn-delete" onclick="deleteItem(${item.id}, '${item.name.replace(/'/g, "\\'")}')" title="Delete product">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -409,6 +440,35 @@
             } catch (e) {
                 alert("Error: " + e.message);
                 qtyElement.innerText = originalQty;
+            }
+        }
+
+        async function deleteItem(id, name) {
+            if(!confirm(`Are you sure you want to completely delete "${name}" from inventory?`)) {
+                return;
+            }
+
+            const row = document.getElementById(`row-${id}`);
+            row.style.opacity = '0.5';
+
+            try {
+                const res = await fetch(`/api/inventory/${id}`, {
+                    method: 'DELETE',
+                    headers: getHeaders()
+                });
+                
+                if (res.status === 401) {
+                    logout();
+                    alert("Invalid PIN. Please login again.");
+                    return;
+                }
+                
+                if (!res.ok) throw new Error("Delete failed");
+                
+                loadInventory();
+            } catch (e) {
+                alert("Error: " + e.message);
+                row.style.opacity = '1';
             }
         }
 
