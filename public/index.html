@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventory Management System</title>
+    <title>Admin Dashboard | Inventory</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
         
@@ -28,6 +28,16 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
 
+        .auth-container {
+            max-width: 400px;
+            margin: 100px auto;
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
         h1 { 
             color: #1f2937;
             font-size: 22px;
@@ -36,6 +46,11 @@
             padding-bottom: 15px; 
             margin-top: 0;
             margin-bottom: 25px;
+        }
+
+        .auth-container h1 {
+            border: none;
+            margin-bottom: 10px;
         }
 
         .panel {
@@ -60,7 +75,7 @@
             align-items: center;
         }
 
-        input[type="text"], input[type="number"] { 
+        input[type="text"], input[type="number"], input[type="password"] { 
             background: #ffffff; 
             border: 1px solid #d1d5db; 
             border-radius: 6px;
@@ -131,7 +146,6 @@
             border-bottom: none;
         }
 
-        /* Quantity Control Styles */
         .qty-control {
             display: flex;
             align-items: center;
@@ -168,10 +182,6 @@
             border-color: #9ca3af;
         }
 
-        .btn-qty:active {
-            transform: scale(0.95);
-        }
-
         .footer-links {
             display: flex;
             justify-content: space-between;
@@ -183,22 +193,18 @@
             color: #6b7280;
         }
 
-        a { 
-            color: #3b82f6; 
-            text-decoration: none; 
-            font-weight: 500;
-        }
+        a { color: #3b82f6; text-decoration: none; font-weight: 500; }
+        a:hover { text-decoration: underline; }
         
-        a:hover {
-            text-decoration: underline;
-        }
-        
-        #status-msg {
+        #status-msg, #login-error {
             font-size: 14px;
             margin-top: 12px;
             display: block;
             font-weight: 500;
+            color: #ef4444;
         }
+
+        #dashboard { display: none; }
 
         @media (max-width: 600px) {
             .form-group { flex-direction: column; align-items: stretch; }
@@ -210,8 +216,21 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Inventory Management System</h1>
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="auth-container">
+        <h1>Admin Login</h1>
+        <p style="color: #6b7280; margin-bottom: 25px; font-size: 14px;">Enter PIN to access inventory controls.</p>
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <input type="password" id="adminPin" placeholder="Enter PIN" onkeypress="if(event.key === 'Enter') login()">
+            <button onclick="login()" style="width: 100%; padding: 12px;">Login</button>
+        </div>
+        <span id="login-error"></span>
+    </div>
+
+    <!-- MAIN DASHBOARD -->
+    <div id="dashboard" class="container">
+        <h1>Admin Control Panel</h1>
         
         <div class="panel">
             <span class="panel-title">Add New Item</span>
@@ -242,19 +261,56 @@
         </div>
         
         <div class="footer-links">
-            <span>System Status: <span style="color: #10b981; font-weight: 600;">Online</span></span>
+            <span><button onclick="logout()" style="background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; padding: 6px 12px; font-size: 12px;">Logout</button></span>
             <a href="report.html" target="_blank">View Public Report &rarr;</a>
         </div>
     </div>
 
     <script>
+        let savedPin = sessionStorage.getItem('adminPin');
+
+        function checkAuth() {
+            if (savedPin) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                loadInventory();
+            } else {
+                document.getElementById('login-screen').style.display = 'block';
+                document.getElementById('dashboard').style.display = 'none';
+            }
+        }
+
+        function login() {
+            const pin = document.getElementById('adminPin').value;
+            if(!pin) {
+                document.getElementById('login-error').innerText = "Please enter a PIN";
+                return;
+            }
+            sessionStorage.setItem('adminPin', pin);
+            savedPin = pin;
+            checkAuth();
+        }
+
+        function logout() {
+            sessionStorage.removeItem('adminPin');
+            savedPin = null;
+            document.getElementById('adminPin').value = '';
+            checkAuth();
+        }
+
+        // Add headers helper
+        function getHeaders() {
+            return { 
+                'Content-Type': 'application/json',
+                'x-admin-pin': savedPin
+            };
+        }
+
         async function loadInventory() {
             try {
+                // Anyone can fetch, no PIN needed for GET
                 const res = await fetch('/api/inventory');
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => ({}));
-                    throw new Error(errData.error || "Failed to fetch from API.");
-                }
+                if (!res.ok) throw new Error("Failed to fetch data");
                 const data = await res.json();
                 
                 const tbody = document.getElementById('inventoryBody');
@@ -302,14 +358,17 @@
             try {
                 const res = await fetch('/api/inventory', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: getHeaders(),
                     body: JSON.stringify({ name, quantity: qty })
                 });
                 
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => ({}));
-                    throw new Error(errData.error || "Failed to add item.");
+                if (res.status === 401) {
+                    logout();
+                    alert("Invalid PIN. Please login again.");
+                    return;
                 }
+                
+                if (!res.ok) throw new Error("Failed to add item.");
                 
                 document.getElementById('itemName').value = '';
                 document.getElementById('itemQty').value = '0';
@@ -333,14 +392,17 @@
             try {
                 const res = await fetch(`/api/inventory/${id}/update`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: getHeaders(),
                     body: JSON.stringify({ delta })
                 });
                 
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => ({}));
-                    throw new Error(errData.error || "Update failed");
+                if (res.status === 401) {
+                    logout();
+                    alert("Invalid PIN. Please login again.");
+                    return;
                 }
+                
+                if (!res.ok) throw new Error("Update failed");
                 
                 const data = await res.json();
                 qtyElement.innerText = data.newQuantity;
@@ -350,7 +412,8 @@
             }
         }
 
-        loadInventory();
+        // Init
+        checkAuth();
     </script>
 </body>
 </html>

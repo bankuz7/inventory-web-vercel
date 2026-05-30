@@ -11,16 +11,26 @@ app.use(express.static('public'));
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const ADMIN_PIN = process.env.ADMIN_PIN || '9712';
 
 const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseKey || 'placeholder');
 
-// Get all inventory (Report)
+// Middleware to check Admin PIN
+const requirePin = (req, res, next) => {
+  const pin = req.headers['x-admin-pin'];
+  if (pin !== ADMIN_PIN) {
+    return res.status(401).json({ error: "Unauthorized: Invalid or missing Admin PIN" });
+  }
+  next();
+};
+
+// Get all inventory (Report) - PUBLIC (No PIN required)
 app.get('/api/inventory', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('inventory')
       .select('*')
-      .order('id', { ascending: false });
+      .order('id', { ascending: true });
 
     if (error) throw error;
     res.json(data);
@@ -29,8 +39,8 @@ app.get('/api/inventory', async (req, res) => {
   }
 });
 
-// Add new item
-app.post('/api/inventory', async (req, res) => {
+// Add new item - PROTECTED (PIN required)
+app.post('/api/inventory', requirePin, async (req, res) => {
   try {
     const { name, quantity } = req.body;
     const qty = parseInt(quantity, 10) || 0;
@@ -47,8 +57,8 @@ app.post('/api/inventory', async (req, res) => {
   }
 });
 
-// Update quantity (+ or -)
-app.post('/api/inventory/:id/update', async (req, res) => {
+// Update quantity (+ or -) - PROTECTED (PIN required)
+app.post('/api/inventory/:id/update', requirePin, async (req, res) => {
   try {
     const delta = parseInt(req.body.delta, 10);
     const id = parseInt(req.params.id, 10);
