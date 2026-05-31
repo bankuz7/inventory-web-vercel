@@ -406,6 +406,30 @@ app.post('/api/table/assign', requirePin, asyncHandler(async (req, res) => {
   res.json({ assigned_to: table_number, results });
 }));
 
+// ─────────────────── TABLE STATS ───────────────────
+app.get('/api/tables/summary', asyncHandler(async (_req, res) => {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const { data, error } = await supabasePublic
+    .from('inventory_history')
+    .select('table_number, action, delta, created_at')
+    .gte('created_at', todayStart.toISOString());
+
+  if (error) throw error;
+
+  const summary = {};
+  (data || []).forEach(row => {
+    const tbl = row.table_number || 'unknown';
+    if (!summary[tbl]) summary[tbl] = { moves: 0, lastAt: null, assignCount: 0 };
+    summary[tbl].moves++;
+    summary[tbl].lastAt = row.created_at;
+    if (row.action === 'table_assign') summary[tbl].assignCount++;
+  });
+
+  res.json(summary);
+}));
+
 // Health check
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

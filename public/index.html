@@ -290,20 +290,37 @@
     .empty svg{opacity:0.3;margin-bottom:10px;}
     .empty p{font-size:12px;color:var(--text-4);}
 
-    /* misc */
-    .hidden{display:none!important;}
-    .pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:600;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);color:var(--text-2);}
-    ::-webkit-scrollbar{width:7px;height:7px;}
-    ::-webkit-scrollbar-track{background:transparent;}
-    ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.07);border-radius:4px;}
-    ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.13);}
+ /* misc */
+ .hidden{display:none!important;}
+ .pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:600;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);color:var(--text-2);}
 
-    @media(max-width:900px){
-      .tbl{overflow-x:auto;}
-      table{min-width:680px;}
-      .form-row{grid-template-columns:1fr;}
-    }
-  </style>
+ /* table cards */
+ .table-card{
+  width:100%;text-align:left;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;
+  cursor:pointer;transition:all 150ms;font-family:var(--font);
+ }
+ .table-card:hover{background:var(--hover);border-color:var(--border-strong);}
+ .table-card.is-active{
+  background:rgba(94,106,210,0.08);border-color:rgba(113,112,255,0.35);
+  box-shadow:0 0 0 1px rgba(113,112,255,0.1);
+ }
+ .table-card.has-data .table-card-dot{background:var(--green)!important;}
+
+@media(max-width:900px){
+ #tableGrid{grid-template-columns:repeat(2,1fr);}
+ .table-card{padding:12px 14px;}
+ .tbl{overflow-x:auto;}
+ table{min-width:680px;}
+ .form-row{grid-template-columns:1fr;}
+ }
+
+::-webkit-scrollbar{width:7px;height:7px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.07);border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.13);}
+</style>
 </head>
 <body>
 
@@ -447,49 +464,69 @@
       </div>
     </section>
 
-    <!-- TABLE MANAGER -->
-    <section id="page-tables" class="hidden">
-      <div class="page-header">
-        <h2 class="page-title">Table Manager</h2>
-        <p class="page-sub">Assign stock directly to dining tables — D1 through D16</p>
-      </div>
-      <div style="background:var(--panel);border:1px solid var(--border-strong);border-radius:var(--radius-lg);padding:20px;">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
-          <select class="select" id="tableSel" style="min-width:180px;">
-            <option value="" disabled selected>Select a table</option>
-          </select>
-          <select class="select" id="tblItemSel" style="min-width:220px;"><option value="" disabled selected>Select an item</option></select>
-          <input type="number" class="form-input" id="tblQty" value="1" min="1" style="width:80px;" />
-          <button class="btn btn-success" onclick="assignToTable()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-            Assign
-          </button>
-        </div>
-        <div id="tableMsg" style="font-size:12px;min-height:18px;"></div>
-      </div>
+ <!-- TABLE MANAGER -->
+ <section id="page-tables" class="hidden">
+  <div class="page-header">
+   <h2 class="page-title">Table Manager</h2>
+   <p class="page-sub">Tap any table (D1–D16) to see today’s assignments and history</p>
+  </div>
 
-      <div style="margin-top:22px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
-          <div style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;">Table Moves</div>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <select class="select" id="tblDateFilter" onchange="loadTblHistory()" style="padding:6px 24px 6px 8px;font-size:11px;">
-              <option value="today">Today</option><option value="yesterday">Yesterday</option><option value="">All dates</option>
-            </select>
-            <select class="select" id="tblTableFilter" onchange="loadTblHistory()" style="padding:6px 24px 6px 8px;font-size:11px;min-width:120px;">
-              <option value="">All tables</option>
-            </select>
-          </div>
-        </div>
-        <div class="tbl">
-          <table>
-            <thead>
-              <tr><th>Time</th><th>Table</th><th>Item</th><th>Action</th><th>Change</th><th>Before</th><th>After</th></tr>
-            </thead>
-            <tbody id="tblHistoryBody"><tr><td colspan="7" style="color:var(--text-3);padding:20px;">Select a table or date to view history.</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
+  <!-- TABLE GRID -->
+  <div style="background:var(--panel);border:1px solid var(--border-strong);border-radius:var(--radius-lg);padding:20px;margin-bottom:20px;">
+   <div style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px;">Dining Tables</div>
+   <div id="tableGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+    <!-- D1-D16 injected by JS -->
+   </div>
+   <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+    <select class="select" id="tblItemSel" style="min-width:200px;"><option disabled selected>Item</option></select>
+    <input type="number" class="form-input" id="tblQty" value="1" min="1" style="width:80px;" />
+    <button class="btn btn-success" onclick="assignToTable()">
+     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+     Assign
+    </button>
+   </div>
+   <div id="tableMsg" style="font-size:12px;min-height:18px;margin-top:6px;"></div>
+   <input type="hidden" id="tblDateFilter" value="today" />
+   <input type="hidden" id="tblTableFilter" />
+  </div>
+
+  <!-- TABLE DETAIL PANEL -->
+  <div id="tableDetail" style="display:none;background:var(--panel);border:1px solid var(--border-strong);border-radius:var(--radius-lg);padding:20px;">
+   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+    <div>
+     <div style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;">Selected Table</div>
+     <div id="tableDetailTitle" style="font-size:20px;font-weight:700;letter-spacing:-0.4px;color:var(--text);">—</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+     <div id="tableDetailBadge" style="font-size:11px;font-weight:600;"></div>
+     <button class="btn btn-ghost btn-sm" onclick="clearTableSelection()">Close</button>
+    </div>
+   </div>
+
+   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;">
+     <div style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;">Total Moves</div>
+     <div id="td-moves" style="font-size:22px;font-weight:700;letter-spacing:-0.4px;">—</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;">
+     <div style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;">Assignments Today</div>
+     <div id="td-assigns" style="font-size:22px;font-weight:700;letter-spacing:-0.4px;color:var(--green);">—</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;">
+     <div style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;">Last Activity</div>
+     <div id="td-last" class="mono" style="font-size:12px;margin-top:6px;color:var(--text-2);">—</div>
+    </div>
+   </div>
+
+   <div style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">History</div>
+   <div class="tbl">
+    <table>
+     <thead><tr><th>Time</th><th>Item</th><th>Action</th><th>Change</th><th>Before</th><th>After</th></tr></thead>
+     <tbody id="tdHistoryBody"><tr><td colspan="6" style="color:var(--text-3);padding:20px;">No entries yet.</td></tr></tbody>
+    </table>
+   </div>
+  </div>
+ </section>
 
     <!-- HISTORY LOG -->
     <section id="page-history" class="hidden">
@@ -840,60 +877,158 @@ async function renderRecent(){
 }
 
 // ════════════════════ TABLES ════════════════════
-function renderTableSelects(){
-  const sel=document.getElementById('tableSel');
-  const filt=document.getElementById('tblTableFilter');
-  const items=document.getElementById('tblItemSel');
-  if(sel.options.length<=1){
-    for(let i=1;i<=16;i++){
-      const o=document.createElement('option'); o.value='D'+i; o.textContent='Dining Table '+i;
-      sel.appendChild(o);
-      const o2=document.createElement('option'); o2.value='D'+i; o2.textContent='Table D'+i;
-      filt.appendChild(o2);
-    }
+const TABLE_COUNT = 16;
+
+function getTableId(num){ return 'tbl-' + num; }
+
+function buildTableGrid(){
+  const grid = document.getElementById('tableGrid');
+  grid.innerHTML = '';
+  for(let i=1; i<=TABLE_COUNT; i++){
+    const id = getTableId(i);
+    const card = document.createElement('button');
+    card.className = 'table-card';
+    card.dataset.table = 'D' + i;
+    card.id = id;
+    card.onclick = () => selectTable('D'+i);
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div style="font-size:13px;font-weight:600;color:var(--text-2);">Dining Table ${i}</div>
+        <div class="table-card-dot" style="width:8px;height:8px;border-radius:50%;background:var(--text-4);"></div>
+      </div>
+      <div style="font-size:10px;color:var(--text-4);">D${i}</div>
+    `;
+    grid.appendChild(card);
   }
-  items.innerHTML='<option disabled selected>Item</option>';
-  inventory.forEach(it=>{
-    const o=document.createElement('option'); o.value=it.id; o.textContent=`${it.name} (${it.quantity} ${it.unit})`; items.appendChild(o);
+}
+
+async function loadTableSummary(){
+  try{
+    const r = await fetch(`${API}/tables/summary`);
+    const summary = r.ok ? await r.json() : {};
+    for(let i=1; i<=TABLE_COUNT; i++){
+      const tbl = 'D'+i;
+      const info = summary[tbl];
+      const card = document.getElementById(getTableId(i));
+      if(!card) continue;
+      const dot = card.querySelector('.table-card-dot');
+      card.classList.remove('is-active','has-data');
+      if(info && info.moves > 0){
+        dot.style.background = 'var(--green)';
+        card.classList.add('has-data');
+      } else {
+        dot.style.background = 'var(--text-4)';
+      }
+    }
+  }catch(e){ /* silent */ }
+}
+
+async function selectTable(tbl){
+  selectedTbl = tbl;
+  document.getElementById('tableSel') && (document.getElementById('tableSel').value = tbl);
+  document.getElementById('tblTableFilter') && (document.getElementById('tblTableFilter').value = tbl);
+  document.getElementById('tblDateFilter').value = 'today';
+
+  // highlight active card
+  document.querySelectorAll('.table-card').forEach(c => c.classList.remove('is-active'));
+  const card = document.getElementById(getTableId(parseInt(tbl.replace('D',''),10)));
+  if(card){
+    card.classList.add('is-active');
+    card.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
+  loadTableDetail(tbl);
+}
+
+async function loadTableDetail(tbl){
+  const detailEl = document.getElementById('tableDetail');
+  detailEl.style.display = 'block';
+  document.getElementById('tableDetailTitle').textContent = `Dining Table ${tbl.replace('D','')}`;
+
+  const r = await fetch(`${API}/history?table_number=${encodeURIComponent(tbl)}&date=today&limit=200`);
+  const rows = r.ok ? await r.json() : [];
+
+  const moves = rows.length;
+  const assigns = rows.filter(x => x.action === 'table_assign').length;
+  const last = rows.length ? rows[0].created_at : null;
+
+  document.getElementById('td-moves').textContent = moves;
+  document.getElementById('td-assigns').textContent = assigns;
+  document.getElementById('td-last').textContent = last ? fmtDate(last) : '—';
+
+  const badge = document.getElementById('tableDetailBadge');
+  badge.textContent = assigns > 0 ? `${assigns} assign${assigns>1?'s':''} today` : 'No activity';
+  badge.style.background = assigns > 0 ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.04)';
+  badge.style.color = assigns > 0 ? 'var(--green)' : 'var(--text-3)';
+  badge.style.padding = '4px 10px';
+  badge.style.borderRadius = '99px';
+  badge.style.border = '1px solid ' + (assigns > 0 ? 'rgba(16,185,129,0.2)' : 'var(--border)');
+
+  const tb = document.getElementById('tdHistoryBody');
+  if(!rows.length){
+    tb.innerHTML = '<tr><td colspan="6" style="color:var(--text-3);padding:20px;">No entries for this table today.</td></tr>';
+    return;
+  }
+  tb.innerHTML = rows.map(t => `
+    <tr>
+      <td class="mono" style="font-size:11px;color:var(--text-3);">${fmtDate(t.created_at)}</td>
+      <td><span class="name">${t.item_name||'#'+t.item_id}</span></td>
+      <td>${actionLabel(t.action,-t.delta)}</td>
+      <td class="mono">${t.delta>0?'+':''}${t.delta}</td>
+      <td class="mono">${t.qty_before??'—'}</td>
+      <td class="mono">${t.qty_after??'—'}</td>
+    </tr>
+  `).join('');
+}
+
+function clearTableSelection(){
+  selectedTbl = '';
+  document.getElementById('tableDetail').style.display = 'none';
+  document.getElementById('tableSel') && (document.getElementById('tableSel').value = '');
+  document.getElementById('tblTableFilter') && (document.getElementById('tblTableFilter').value = '');
+  document.querySelectorAll('.table-card').forEach(c => c.classList.remove('is-active'));
+}
+
+function renderTableSelects(){
+  const items = document.getElementById('tblItemSel');
+  if(!items) return;
+  items.innerHTML = '<option disabled selected>Item</option>';
+  inventory.forEach(it => {
+    const o = document.createElement('option');
+    o.value = it.id;
+    o.textContent = `${it.name} (${it.quantity} ${it.unit})`;
+    items.appendChild(o);
   });
 }
 
-async function initTables(){
+function initTables(){
+  buildTableGrid();
   renderTableSelects();
-  loadTblHistory();
-}
-
-document.getElementById('tableSel').addEventListener('change',e=>{ selectedTbl=e.target.value; loadTblHistory(); });
-
-async function loadTblHistory(){
-  const date=document.getElementById('tblDateFilter').value;
-  const tbl=document.getElementById('tblTableFilter').value;
-  if(!tbl&&!date){ document.getElementById('tblHistoryBody').innerHTML='<tr><td colspan="7" style="padding:20px;color:var(--text-3);">No filters selected.</td></tr>';return;}
-  const qs=new URLSearchParams({limit:200});
-  if(tbl) qs.set('table_number',tbl);
-  if(date) qs.set('date',date);
-  const r=await fetch(`${API}/history?${qs}`);
-  const rows=r.ok?await r.json():[];
-  const tb=document.getElementById('tblHistoryBody');
-  if(!rows.length){ tb.innerHTML='<tr><td colspan="7" style="color:var(--text-3);padding:20px;">No records match.</td></tr>';return; }
-  tb.innerHTML=rows.map(t=>`<tr><td class="mono" style="font-size:11px;">${fmtDate(t.created_at)}</td><td class="name">${t.table_number||'—'}</td><td>${t.item_name||'#'+t.item_id}</td><td>${actionLabel(t.action,t.delta)}</td><td class="mono">${t.delta>0?'+':''}${t.delta}</td><td class="mono">${t.qty_before??'—'}</td><td class="mono">${t.qty_after??'—'}</td></tr>`).join('');
+  loadTableSummary();
+  if(selectedTbl) loadTableDetail(selectedTbl);
 }
 
 async function assignToTable(){
-  const tbl=document.getElementById('tableSel').value;
-  const itemId=document.getElementById('tblItemSel').value;
-  const qty=parseInt(document.getElementById('tblQty').value,10);
-  const msg=document.getElementById('tableMsg');
-  if(!tbl) return msg.style.color='var(--red)',msg.textContent='Select a table.';
-  if(!itemId||!Number.isFinite(qty)||qty<=0) return msg.style.color='var(--red)',msg.textContent='Pick item + valid qty.';
+  const tbl = document.getElementById('tblTableFilter')?.value || document.getElementById('tableSel')?.value;
+  const itemId = parseInt(document.getElementById('tblItemSel').value, 10);
+  const qty = parseInt(document.getElementById('tblQty').value, 10);
+  const msg = document.getElementById('tableMsg');
+
+  if(!tbl) return msg.style.color='var(--red)', msg.textContent='Select a table.';
+  if(!itemId || !Number.isFinite(qty) || qty <= 0) return msg.style.color='var(--red)', msg.textContent='Pick item + valid qty.';
+
   msg.style.color='var(--accent-b)'; msg.textContent='Assigning…';
   try{
-    const r=await fetch(`${API}/table/assign`,{method:'POST',headers:hdrs(),body:JSON.stringify({table_number:tbl,assignments:[{item_id:parseInt(itemId,10),delta:qty}]})});
-    if(r.status===401){doLogout();return;}
-    const d=await r.json();
-    if(!r.ok) throw new Error(d.error||'Failed');
-    msg.style.color='var(--green)'; msg.textContent=`✓ Assigned to ${tbl} — ${d.results?.[0]?.assigned||qty} units`;
+    const r = await fetch(`${API}/table/assign`, {
+      method:'POST', headers:hdrs(),
+      body:JSON.stringify({ table_number: tbl, assignments:[{ item_id:itemId, delta:qty }] })
+    });
+    if(r.status===401){ doLogout(); return; }
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Failed');
+    msg.style.color='var(--green)'; msg.textContent=`✓ Assigned ${d.results?.[0]?.assigned||qty} units to ${tbl}`;
     loadInventory();
+    if(selectedTbl === tbl) loadTableDetail(tbl);
+    loadTableSummary();
   }catch(e){ msg.style.color='var(--red)'; msg.textContent='Error: '+e.message; }
 }
 
