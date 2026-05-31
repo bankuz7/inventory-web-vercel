@@ -401,17 +401,20 @@
         
         
         <div class="history-section" id="historySection">
-            <div class="history-header">
-                <div class="history-title">Change History</div>
-                <div class="history-controls">
-                    <button class="btn-toggle active" id="btnToday" onclick="setHistoryMode('today')">Today</button>
-                    <button class="btn-toggle" id="btnTomorrow" onclick="setHistoryMode('tomorrow')">Tomorrow</button>
-                </div>
-            </div>
-            <div class="history-list" id="historyList">
-                <div class="history-empty">Loading history...</div>
-            </div>
-        </div>
+ <div class="history-header">
+ <div class="history-title">Change History</div>
+ <div class="history-controls">
+ <button class="btn-toggle active" id="btnToday" onclick="setHistoryMode('today')">Today</button>
+ <button class="btn-toggle" id="btnTomorrow" onclick="setHistoryMode('tomorrow')">Tomorrow</button>
+ </div>
+ </div>
+ <div class="history-list" id="historyList">
+ <div class="history-empty">Loading history...</div>
+ </div>
+ <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+ <button class="btn-download" onclick="exportTableWiseHistoryToExcel()" style="background:#111827;color:#ffffff;border:none;border-radius:6px;padding:8px 12px;font-size:12px;font-weight:500;cursor:pointer;">Download Table-wise History</button>
+ </div>
+ </div>
 
         <div class="footer-section">
             <span>Last updated: <span id="lastUpdate" style="color: #1f2937; font-weight: 500;">Just now</span></span>
@@ -504,10 +507,107 @@
 
         
 
-        function exportToPDF() {
-            // Browser print dialog -> user can save as PDF
-            window.print();
-        }
+ function exportToPDF() {
+ // Browser print dialog -> user can save as PDF
+ window.print();
+ }
+
+ function getTodayISO() {
+ const now = new Date();
+ const y = now.getFullYear();
+ const m = String(now.getMonth() + 1).padStart(2, '0');
+ const d = String(now.getDate()).padStart(2, '0');
+ return `${y}-${m}-${d}`;
+ }
+
+ function buildTableWiseHistory(rows) {
+ if (!rows || !rows.length) return [];
+ const byTable = {};
+ rows.forEach(r => {
+ const table = r.table_number || 'Without Table';
+ if (!byTable[table]) byTable[table] = [];
+ byTable[table].push(r);
+ });
+ const sections = [];
+ Object.keys(byTable).sort().forEach(table => {
+ sections.push({ sectionName: `Table: ${table}`, rows: byTable[table] });
+ });
+ return sections;
+ }
+
+ function exportTableWiseHistoryToExcel() {
+ fetch('/api/history?limit=1000')
+ .then(res => res.json())
+ .then(rows => {
+ if (!rows || !rows.length) { alert('No history available to export.'); return; }
+ const sections = buildTableWiseHistory(rows);
+ const wb = XLSX.utils.book_new();
+ sections.forEach((section, index) => {
+ const wsData = section.rows.map(r => ({
+ Time: r.created_at ? new Date(r.created_at).toLocaleString() : '',
+ Item: r.item_name || ('#' + r.item_id),
+ Action: r.action,
+ Change: r.delta ?? 0,
+ 'Qty Before': r.qty_before ?? 'N/A',
+ 'Qty After': r.qty_after ?? 'N/A',
+ Table: r.table_number || 'Without Table',
+ }));
+ const ws = XLSX.utils.json_to_sheet(wsData);
+ XLSX.utils.book_append_sheet(wb, ws, `History ${index + 1}`);
+ });
+ XLSX.writeFile(wb, `Inventory_Table_History_${getTodayISO()}.xlsx`);
+ })
+ .catch(err => alert('Failed to load history: ' + err.message));
+ }
+
+ function renderHistoryForPrint() {
+ if (!historyData.length) return;
+ const list = document.getElementById('historyList');
+ const sectionsContainer = document.getElementById('printHistoryContainer');
+ if (!list || !sectionsContainer) return;
+ const sections = buildTableWiseHistory(historyData);
+ list.style.display = 'none';
+ sectionsContainer.innerHTML = '';
+ sections.forEach(section => {
+ const block = document.createElement('div');
+ block.style.marginTop = '14px';
+ const h = document.createElement('div');
+ h.style.fontWeight = '600';
+ h.style.color = '#111827';
+ h.textContent = section.sectionName;
+ block.appendChild(h);
+ const table = document.createElement('table');
+ table.style.width = '100%';
+ table.style.borderCollapse = 'collapse';
+ table.style.minWidth = '500px';
+ table.innerHTML = `<thead><tr>
+ <th style="background:#fafafa;color:#4b5563;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:8px 10px;text-align:left;border-bottom:1px solid #e5e7eb;">Time</th>
+ <th style="background:#fafafa;color:#4b5563;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:8px 10px;text-align:left;border-bottom:1px solid #e5e7eb;">Item</th>
+ <th style="background:#fafafa;color:#4b5563;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:8px 10px;text-align:left;border-bottom:1px solid #e5e7eb;">Action</th>
+ <th style="background:#fafafa;color:#4b5563;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:8px 10px;text-align:left;border-bottom:1px solid #e5e7eb;">Change</th>
+ <th style="background:#fafafa;color:#4b5563;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:8px 10px;text-align:left;border-bottom:1px solid #e5e7eb;">Qty Before</th>
+ <th style="background:#fafafa;color:#4b5563;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:8px 10px;text-align:left;border-bottom:1px solid #e5e7eb;">Qty After</th>
+ </tr></thead><tbody></tbody>`;
+ section.rows.forEach(r => {
+ const tr = document.createElement('tr');
+ tr.style.borderBottom = '1px solid #f3f4f6';
+ const actionLabel = r.action === 'add' ? 'Added' : (r.action === 'delete' ? 'Deleted' : (r.action === 'table_assign' ? 'Table Assigned' : 'Adjusted'));
+ tr.innerHTML = `
+ <td style="padding:6px 10px;font-size:12px;color:#374151;">${r.created_at ? new Date(r.created_at).toLocaleString() : '-'}</td>
+ <td style="padding:6px 10px;font-size:12px;color:#111827;font-weight:500;">${r.item_name || ('#' + r.item_id)}</td>
+ <td style="padding:6px 10px;font-size:12px;color:#374151;">${actionLabel}</td>
+ <td style="padding:6px 10px;font-size:12px;color:#374151;">${r.delta ?? 0}</td>
+ <td style="padding:6px 10px;font-size:12px;color:#374151;">${r.qty_before ?? 'N/A'}</td>
+ <td style="padding:6px 10px;font-size:12px;color:#374151;">${r.qty_after ?? 'N/A'}</td>
+ `;
+ table.querySelector('tbody').appendChild(tr);
+ });
+ block.appendChild(table);
+ sectionsContainer.appendChild(block);
+ });
+ sectionsContainer.style.display = 'block';
+ list.style.display = 'none';
+ }
 
         
 
