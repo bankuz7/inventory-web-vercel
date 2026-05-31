@@ -34,22 +34,23 @@ const supabaseAdmin = createClient(
 );
 
 async function logHistory(entry) {
-  // entry: { item_id, item_name, action, delta, qty_before, qty_after }
-  const payload = {
-    item_id: entry.item_id ?? null,
-    item_name: entry.item_name ?? null,
-    action: entry.action,
-    delta: Number.isFinite(Number(entry.delta)) ? parseInt(entry.delta, 10) : 0,
-    qty_before: Number.isFinite(Number(entry.qty_before)) ? parseInt(entry.qty_before, 10) : null,
-    qty_after: Number.isFinite(Number(entry.qty_after)) ? parseInt(entry.qty_after, 10) : null,
-    created_at: new Date().toISOString(),
-  };
+ // entry: { item_id, item_name, action, delta, qty_before, qty_after, table_number }
+ const payload = {
+ item_id: entry.item_id ?? null,
+ item_name: entry.item_name ?? null,
+ action: entry.action,
+ delta: Number.isFinite(Number(entry.delta)) ? parseInt(entry.delta, 10) : 0,
+ qty_before: Number.isFinite(Number(entry.qty_before)) ? parseInt(entry.qty_before, 10) : null,
+ qty_after: Number.isFinite(Number(entry.qty_after)) ? parseInt(entry.qty_after, 10) : null,
+ table_number: entry.table_number ?? null,
+ created_at: new Date().toISOString(),
+ };
 
-  const { error } = await supabaseAdmin
-    .from('inventory_history')
-    .insert([payload]);
+ const { error } = await supabaseAdmin
+ .from('inventory_history')
+ .insert([payload]);
 
-  if (error) throw error;
+ if (error) throw error;
 }
 
 const requirePin = (req, res, next) => {
@@ -81,21 +82,28 @@ app.get('/api/inventory', async (req, res) => {
 });
 
 // PUBLIC: Recent change history (for report page)
+// Supports optional table filtering: /api/history?table_number=D3&limit=100
 app.get('/api/history', async (req, res) => {
-  try {
-    const limit = Math.min(parseInt(req.query.limit || '300', 10) || 300, 1000);
+ try {
+ const rawLimit = req.query.limit || '300';
+ const limit = Math.min(Math.max(parseInt(rawLimit, 10), 1), 1000);
+ const tableNumber = req.query.table_number ? String(req.query.table_number).trim() : null;
+ const { data, error } = await supabasePublic
+ .from('inventory_history')
+ .select('id,item_id,item_name,action,delta,qty_before,qty_after,table_number,created_at')
+ .order('created_at', { ascending: false })
+ .limit(limit);
 
-    const { data, error } = await supabasePublic
-      .from('inventory_history')
-      .select('id,item_id,item_name,action,delta,qty_before,qty_after,created_at')
-      .order('created_at', { ascending: false })
-      .limit(limit);
+ if (error) throw error;
 
-    if (error) throw error;
-    res.json(data || []);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+ const filtered = tableNumber
+ ? (data || []).filter(row => row.table_number === tableNumber)
+ : data;
+
+ res.json(filtered || []);
+ } catch (err) {
+ res.status(500).json({ error: err.message });
+ }
 });
 
 
@@ -286,9 +294,75 @@ app.delete('/api/inventory/:id', requirePin, async (req, res) => {
     }
 
     res.json({ deleted: true });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
+} catch (err) {
+ res.status(400).json({ error: err.message });
+ }
+});
+
+// ADMIN: Assign item(s) to a table
+app.post('/api/table/assign', requirePin, async (req, res) => {
+ try {
+ const { table_number, assignments } = req.body;
+ // assignments: [{ item_id, delta }]
+
+ if (!table_number || !Array.isArray(assignments) || assignments.length === 0) {
+ return res.status(400).json({ error: 'table_number and assignments are required' });
+ }
+
+ const results = [];
+ for (const a of assignments) {
+ const item_id = parseInt(a.item_id, 10);
+ const delta = parseInt(a.delta, 10);
+ if (!Number.isFinite(item_id) || !Number.isFinite(delta) || delta <= 0) {
+ return res.status(400).json({ error: 'Each assignment must have a valid item_id and positive delta' });
+ }
+
+ const { data: item, error: itemErr } = await supabaseAdmin
+ .from('inventory')
+ .select('name,quantity')
+ .eq('id', item_id)
+ .single();
+
+ if (itemErr) return res.status(404).json({ error: `Item id ${item_id} not found` });
+
+ const beforeQty = item.quantity ?? 0;
+ const newQty = beforeQty - delta;
+ if (newQty < 0) {
+ return res.status(400).json({ error: `Insufficient stock for ${item.name}. Available: ${beforeQty}` });
+ }
+
+ const now = new Date().toISOString();
+
+ const { error: updateErr } = await supabaseAdmin
+ .from('inventory')
+ .update({ quantity: newQty, updated_at: now })
+ .eq('id', item_id);
+
+ if (updateErr) throw updateErr;
+
+ try {
+ await logHistory({
+ item_id,
+ item_name: item.name,
+ action: 'table_assign',
+ delta: -delta,
+ qty_before: beforeQty,
+ qty_after: newQty,
+ table_number: String(table_number),
+ });
+ } catch (e) {
+ // don't fail the whole batch on history failure, but include info
+ results.push({ item_id, item_name: item.name, warning: e.message });
+ continue;
+ }
+
+ results.push({ item_id, item_name: item.name, assigned: delta, remaining: newQty });
+ }
+
+ res.json({ assigned_to: table_number, results });
+ } catch (err) {
+ res.status(500).json({ error: err.message });
+ }
 });
 
 module.exports = app;

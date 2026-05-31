@@ -94,28 +94,65 @@
             <span id="status-msg"></span>
         </div>
 
-        <div class="panel" style="background: #ffffff; padding: 0; border: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 5px; margin-bottom: 10px;">
-                <span class="panel-title" style="margin: 0;">Current Stock Level</span>
-            </div>
-            <input type="text" id="searchInput" class="search-bar" placeholder="Search products..." onkeyup="filterTable()">
-            
-            <div class="table-responsive">
-                <table id="inventoryTable">
-                    <thead>
-                        <tr>
-                            <th>Product Details</th>
-                            <th>Quantity</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="inventoryBody">
-                        <tr><td colspan="3" style="text-align:center; color: #6b7280; padding: 30px;">Loading database...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        
+ <div class="panel" style="background: #ffffff; padding: 0; border: none;">
+ <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 5px; margin-bottom: 10px;">
+ <span class="panel-title" style="margin: 0;">Current Stock Level</span>
+ </div>
+ <input type="text" id="searchInput" class="search-bar" placeholder="Search products..." onkeyup="filterTable()">
+
+ <div class="table-responsive">
+ <table id="inventoryTable">
+ <thead>
+ <tr>
+ <th>Product Details</th>
+ <th>Quantity</th>
+ <th>Actions</th>
+ </tr>
+ </thead>
+ <tbody id="inventoryBody">
+ <tr><td colspan="3" style="text-align:center; color: #6b7280; padding: 30px;">Loading database...</td></tr>
+ </tbody>
+ </table>
+ </div>
+ </div>
+
+ <div class="panel">
+ <span class="panel-title">Dining Tables (D1 – D15)</span>
+ <div style="display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; align-items:center;">
+ <select id="tableSelect">
+ <option value="" disabled selected>Select table</option>
+ </select>
+ <button onclick="openTablePanel()">Manage Table</button>
+ <span id="tableStatus" style="font-size:12px; color:#6b7280;"></span>
+ </div>
+ <div id="tableSection" style="display:none; border-top: 1px solid #e5e7eb; padding-top: 12px;">
+ <div style="font-weight:500; color:#374151; margin-bottom:8px;">Assign from Stock</div>
+ <select id="tableItemSelect"><option value="" disabled selected>Item</option></select>
+ <input type="number" id="tableItemQty" value="1" min="1" style="width:90px;">
+ <button onclick="assignItemToTable()" style="background:#047857;">Assign</button>
+ <div id="tableAssignmentMessage" style="font-size:13px; margin-top:8px;"></div>
+
+ <div style="margin-top:16px; font-weight:500; color:#374151;">Table History</div>
+ <div style="overflow-x:auto;">
+ <table id="tableHistoryTable">
+ <thead>
+ <tr>
+ <th>Time</th>
+ <th>Item</th>
+ <th>Action</th>
+ <th>Change</th>
+ <th>Qty Before</th>
+ <th>Qty After</th>
+ </tr>
+ </thead>
+ <tbody id="tableHistoryBody">
+ <tr><td colspan="6" style="color:#6b7280; padding:10px;">No entries yet.</td></tr>
+ </tbody>
+ </table>
+ </div>
+ </div>
+ </div>
+ 
         <div class="footer-links">
             <span><button onclick="logout()" style="background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; padding: 6px 12px; font-size: 12px;">Logout</button></span>
             <a href="report.html" target="_blank">View Public Report &rarr;</a>
@@ -330,7 +367,128 @@ async function loadInventory() {
             XLSX.writeFile(wb, `Inventory_Report_${new Date().toLocaleDateString().replace(/\//g, '-')}.xlsx`);
         }
 
-        checkAuth();
-    </script>
+ checkAuth();
+ </script>
+ <script>
+ // Dining table logic
+ function buildTableSelect() {
+ const sel = document.getElementById('tableSelect');
+ for (let i = 1; i <= 16; i++) {
+ const opt = document.createElement('option');
+ opt.value = 'D' + i;
+ opt.textContent = 'Dining Table ' + i;
+ sel.appendChild(opt);
+ }
+ }
+
+ function buildItemSelect() {
+ const sel = document.getElementById('tableItemSelect');
+ sel.innerHTML = '<option value="" disabled selected>Item</option>';
+ if (!globalData || globalData.length === 0) return;
+ globalData.forEach(item => {
+ const opt = document.createElement('option');
+ opt.value = item.id;
+ opt.textContent = item.name + ' (stock: ' + item.quantity + ')';
+ sel.appendChild(opt);
+ });
+ }
+
+ function openTablePanel() {
+ const tableNumber = document.getElementById('tableSelect').value;
+ if (!tableNumber) {
+ document.getElementById('tableStatus').textContent = '';
+ return;
+ }
+ document.getElementById('tableStatus').textContent = 'Selected: ' + tableNumber;
+ document.getElementById('tableSection').style.display = 'block';
+ buildItemSelect();
+ loadTableHistory(tableNumber);
+ }
+
+ async function assignItemToTable() {
+ const tableNumber = document.getElementById('tableSelect').value;
+ if (!tableNumber) return alert('Select a table first');
+ const itemId = document.getElementById('tableItemSelect').value;
+ const qtyStr = document.getElementById('tableItemQty').value;
+ const qty = parseInt(qtyStr, 10);
+ const msgEl = document.getElementById('tableAssignmentMessage');
+ if (!itemId || !Number.isFinite(qty) || qty <= 0) {
+ msgEl.style.color = '#ef4444';
+ msgEl.textContent = 'Select an item and enter a valid quantity';
+ return;
+ }
+
+ msgEl.style.color = '#3b82f6';
+ msgEl.textContent = 'Assigning...';
+
+ try {
+ const res = await fetch('/api/table/assign', {
+ method: 'POST',
+ headers: getHeaders(),
+ body: JSON.stringify({ table_number: tableNumber, assignments: [{ item_id: parseInt(itemId, 10), delta: qty }] })
+ });
+ if (res.status === 401) { logout(); return; }
+ const data = await res.json();
+ if (!res.ok) throw new Error(data.error || 'Failed');
+ msgEl.style.color = '#047857';
+ msgEl.textContent = 'Assigned successfully';
+ loadInventory();
+ buildItemSelect();
+ loadTableHistory(tableNumber);
+ setTimeout(() => { msgEl.textContent = ''; }, 4000);
+ } catch (e) {
+ msgEl.style.color = '#ef4444';
+ msgEl.textContent = 'Error: ' + e.message;
+ }
+ }
+
+ async function loadTableHistory(tableNumber) {
+ const tbody = document.getElementById('tableHistoryBody');
+ tbody.innerHTML = '<tr><td colspan="6" style="color:#6b7280; padding:10px;">Loading...</td></tr>';
+ try {
+ const url = '/api/history?table_number=' + encodeURIComponent(tableNumber) + '&limit=100';
+ const res = await fetch(url);
+ if (!res.ok) throw new Error('Failed to load table history');
+ const rows = await res.json();
+ if (!rows || rows.length === 0) {
+ tbody.innerHTML = '<tr><td colspan="6" style="color:#6b7280; padding:10px;">No entries yet.</td></tr>';
+ return;
+ }
+ tbody.innerHTML = rows.map(r => {
+ const actionText = actionLabel(r.action, r.delta);
+ const created = r.created_at
+ ? new Date(r.created_at).toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+ : '';
+ return `<tr>
+<td>${created}</td>
+<td>${r.item_name || ('#' + r.item_id)}</td>
+<td>${actionText}</td>
+<td>${formatDelta(r.delta)}</td>
+<td>${r.qty_before ?? '-'}</td>
+<td>${r.qty_after ?? '-'}</td>
+</tr>`;
+ }).join('');
+ } catch (e) {
+ tbody.innerHTML = `<tr><td colspan="6" style="color:#ef4444; padding:10px;">Error: ${e.message}</td></tr>`;
+ }
+ }
+
+ function formatDelta(delta) {
+ if (typeof delta !== 'number') return '-';
+ if (delta > 0) return '+' + delta;
+ return String(delta);
+ }
+
+ function actionLabel(action, delta) {
+ if (action === 'table_assign') return delta < 0 ? 'Table Assigned' : 'Table Return';
+ if (action === 'adjust') return 'Manual Adjust';
+ if (action === 'add') return 'Initial Add';
+ if (action === 'delete') return 'Delete';
+ if (action === 'category') return 'Category';
+ return action || '-';
+ }
+
+ buildTableSelect();
+ </script>
 </body>
 </html>
