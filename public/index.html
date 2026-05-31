@@ -116,43 +116,69 @@
  </div>
  </div>
 
- <div class="panel">
- <span class="panel-title">Dining Tables (D1 – D15)</span>
- <div style="display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; align-items:center;">
- <select id="tableSelect">
- <option value="" disabled selected>Select table</option>
- </select>
- <button onclick="openTablePanel()">Manage Table</button>
- <span id="tableStatus" style="font-size:12px; color:#6b7280;"></span>
- </div>
- <div id="tableSection" style="display:none; border-top: 1px solid #e5e7eb; padding-top: 12px;">
- <div style="font-weight:500; color:#374151; margin-bottom:8px;">Assign from Stock</div>
- <select id="tableItemSelect"><option value="" disabled selected>Item</option></select>
- <input type="number" id="tableItemQty" value="1" min="1" style="width:90px;">
- <button onclick="assignItemToTable()" style="background:#047857;">Assign</button>
- <div id="tableAssignmentMessage" style="font-size:13px; margin-top:8px;"></div>
+<div style="background:#ffffff;margin-top:24px;padding:24px;border-radius:10px;box-shadow:rgba(0,0,0,0.06) 0px 0px 0px 1px,rgba(0,0,0,0.04) 0px 2px 2px,rgba(0,0,0,0.04) 0px 8px 8px -8px,#fafafa 0px 0px 0px 1px;">
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+<div>
+<div style="font-size:18px;font-weight:600;color:#111827;letter-spacing:-0.3px;">Dining Tables</div>
+<div style="font-size:13px;color:#6b7280;margin-top:4px;">Assign stock items to a table and track what was moved.</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+<select id="tableSelect" style="padding:10px 12px;border:1px solid #e5e7eb;border-radius:6px;background:#ffffff;color:#111827;">
+<option value="" disabled selected>Select table</option>
+</select>
+<button onclick="openTablePanel()" style="background:#0a0a0a;color:#ffffff;font-weight:500;">Manage Table</button>
+</div>
+</div>
+<span id="tableStatus" style="font-size:13px;color:#111827;font-weight:500;"></span>
 
- <div style="margin-top:16px; font-weight:500; color:#374151;">Table History</div>
- <div style="overflow-x:auto;">
- <table id="tableHistoryTable">
- <thead>
- <tr>
- <th>Time</th>
- <th>Item</th>
- <th>Action</th>
- <th>Change</th>
- <th>Qty Before</th>
- <th>Qty After</th>
- </tr>
- </thead>
- <tbody id="tableHistoryBody">
- <tr><td colspan="6" style="color:#6b7280; padding:10px;">No entries yet.</td></tr>
- </tbody>
- </table>
- </div>
- </div>
- </div>
- 
+<div id="tableSection" style="display:none;margin-top:18px;border-top:1px solid #e5e7eb;padding-top:18px;">
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+<div>
+<div style="font-size:13px;color:#374151;font-weight:500;margin-bottom:8px;">Assign from Stock</div>
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+<select id="tableItemSelect" style="min-width:220px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:6px;background:#ffffff;">
+<option value="" disabled selected>Item</option>
+</select>
+<input type="number" id="tableItemQty" value="1" min="1" style="width:100px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:6px;">
+<button onclick="assignItemToTable()" style="background:#047857;color:#ffffff;font-weight:500;">Assign</button>
+</div>
+<div id="tableAssignmentMessage" style="font-size:13px;margin-top:8px;min-height:18px;"></div>
+</div>
+<div style="color:#6b7280;font-size:12px;line-height:1.4;max-width:240px;">
+Stock is reduced when assigned. Reverting an assignment will add the qty back to stock.
+</div>
+</div>
+
+<div style="margin-top:20px;">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+<div style="font-size:13px;color:#374151;font-weight:500;">Table History</div>
+<div id="tableHistoryClear" style="display:none;">
+<button style="background:#ffffff;color:#ef4444;padding:4px 8px;border-radius:9999px;font-size:11px;box-shadow:rgba(0,0,0,0.06) 0px 0px 0px 1px;" onclick="clearTableHistory()">Clear</button>
+</div>
+</div>
+<div style="overflow-x:auto;background:#ffffff;box-shadow:rgba(0,0,0,0.06) 0px 0px 0px 1px,rgba(0,0,0,0.04) 0px 2px 2px;border-radius:10px;">
+<table style="width:100%;border-collapse:collapse;min-width:620px;">
+<thead>
+<tr style="border-bottom:1px solid #e5e7eb;">
+<th style="background:#fafafa;color:#4b5563;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:10px 12px;text-align:left;">Time</th>
+<th style="background:#fafafa;color:#4b5563;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:10px 12px;text-align:left;">Item</th>
+<th style="background:#fafafa;color:#4b5563;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:10px 12px;text-align:left;">Action</th>
+<th style="background:#fafafa;color:#4b5563;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:10px 12px;text-align:left;">Change</th>
+<th style="background:#fafafa;color:#4b5563;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:10px 12px;text-align:left;">Qty Before</th>
+<th style="background:#fafafa;color:#4b5563;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:10px 12px;text-align:left;">Qty After</th>
+</tr>
+</thead>
+<tbody id="tableHistoryBody">
+<tr>
+<td colspan="6" style="color:#6b7280;font-size:13px;padding:12px;">No entries yet for this table.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+
         <div class="footer-links">
             <span><button onclick="logout()" style="background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; padding: 6px 12px; font-size: 12px;">Logout</button></span>
             <a href="report.html" target="_blank">View Public Report &rarr;</a>
@@ -450,24 +476,24 @@ async function loadInventory() {
  const res = await fetch(url);
  if (!res.ok) throw new Error('Failed to load table history');
  const rows = await res.json();
+ document.getElementById('tableHistoryClear').style.display = rows && rows.length ? 'block' : 'none';
  if (!rows || rows.length === 0) {
- tbody.innerHTML = '<tr><td colspan="6" style="color:#6b7280; padding:10px;">No entries yet.</td></tr>';
+ tbody.innerHTML = '<tr><td colspan="6" style="color:#6b7280; padding:10px;">No entries yet for this table.</td></tr>';
  return;
  }
- tbody.innerHTML = rows.map(r => {
+ const fragment = document.createDocumentFragment();
+ rows.forEach(r => {
  const actionText = actionLabel(r.action, r.delta);
  const created = r.created_at
  ? new Date(r.created_at).toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
- : '';
- return `<tr>
-<td>${created}</td>
-<td>${r.item_name || ('#' + r.item_id)}</td>
-<td>${actionText}</td>
-<td>${formatDelta(r.delta)}</td>
-<td>${r.qty_before ?? '-'}</td>
-<td>${r.qty_after ?? '-'}</td>
-</tr>`;
- }).join('');
+ : '-';
+ const tr = document.createElement('tr');
+ tr.style.borderBottom = '1px solid #e5e7eb';
+ tr.innerHTML = `<td>${created}</td><td>${r.item_name || ('#' + r.item_id)}</td><td>${actionText}</td><td>${formatDelta(r.delta)}</td><td>${r.qty_before ?? '-'}</td><td>${r.qty_after ?? '-'}</td>`;
+ fragment.appendChild(tr);
+ });
+ tbody.innerHTML = '';
+ tbody.appendChild(fragment);
  } catch (e) {
  tbody.innerHTML = `<tr><td colspan="6" style="color:#ef4444; padding:10px;">Error: ${e.message}</td></tr>`;
  }
