@@ -625,65 +625,70 @@
 
         
 
-        function isSameLocalDate(d, y, m, day) {
-            return d.getFullYear() === y && d.getMonth() === m && d.getDate() === day;
-        }
+ function isSameLocalDate(d, y, m, day) {
+ const ref = new Date(y, m, day);
+ return d.getFullYear() === ref.getFullYear()
+ && d.getMonth() === ref.getMonth()
+ && d.getDate() === ref.getDate();
+ }
 
-        function formatTimeOnly(iso) {
-            const d = new Date(iso);
-            return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-        }
+ function formatTimeOnly(iso) {
+ const d = new Date(iso);
+ return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+ }
 
-        function formatHistoryDelta(delta) {
-            if (delta > 0) return `<span class="delta-plus">+${delta}</span>`;
-            if (delta < 0) return `<span class="delta-minus">${delta}</span>`;
-            return `<span class="delta-zero">${delta}</span>`;
-        }
+ function formatHistoryDelta(delta) {
+ if (delta > 0) return `<span class="delta-plus">+${delta}</span>`;
+ if (delta < 0) return `<span class="delta-minus">${delta}</span>`;
+ return `<span class="delta-zero">${delta}</span>`;
+ }
 
-        function renderHistory() {
-            const list = document.getElementById('historyList');
-            if (!list) return;
+ function renderHistory() {
+ const list = document.getElementById('historyList');
+ if (!list) return;
 
-            const now = new Date();
-            const y = now.getFullYear();
-            const m = now.getMonth();
-            const d = now.getDate();
+ const now = new Date();
+ const y = now.getFullYear();
+ const m = now.getMonth();
+ const d = now.getDate();
 
-            // Tomorrow date
-            const t = new Date(now);
-            t.setDate(t.getDate() + 1);
+ const tomorrow = new Date(now);
+ tomorrow.setDate(tomorrow.getDate() + 1);
+ const ty = tomorrow.getFullYear();
+ const tm = tomorrow.getMonth();
+ const td = tomorrow.getDate();
 
-            const filtered = historyData.filter(h => {
-                const hd = new Date(h.created_at);
-                if (historyMode === 'today') return isSameLocalDate(hd, y, m, d);
-                if (historyMode === 'tomorrow') return isSameLocalDate(hd, t.getFullYear(), t.getMonth(), t.getDate());
-                return false;
-            });
+ const filtered = historyData.filter(h => {
+ const hd = new Date(h.created_at);
+ if (historyMode === 'today') return isSameLocalDate(hd, y, m, d);
+ if (historyMode === 'tomorrow') return isSameLocalDate(hd, ty, tm, td);
+ return false;
+ });
 
-            if (!filtered.length) {
-                list.innerHTML = `<div class="history-empty">No changes logged for ${historyMode}.</div>`;
-                return;
-            }
+ if (!filtered.length) {
+ list.innerHTML = `<div class="history-empty">No changes logged for ${historyMode}.</div>`;
+ return;
+ }
 
-            list.innerHTML = filtered.slice(0, 200).map(h => {
-                const name = h.item_name || `Item #${h.item_id}`;
-                const delta = typeof h.delta === 'number' ? h.delta : parseInt(h.delta || '0', 10);
-                const before = (h.qty_before === null || h.qty_before === undefined) ? '—' : h.qty_before;
-                const after = (h.qty_after === null || h.qty_after === undefined) ? '—' : h.qty_after;
-                const action = h.action || 'change';
-                const actionLabel = action === 'add' ? 'Added' : (action === 'delete' ? 'Deleted' : 'Adjusted');
+ list.innerHTML = filtered.slice(0, 200).map(h => {
+ const name = h.item_name || `Item #${h.item_id}`;
+ const delta = typeof h.delta === 'number' ? h.delta : parseInt(h.delta || '0', 10);
+ const before = (h.qty_before === null || h.qty_before === undefined) ? '—' : h.qty_before;
+ const after = (h.qty_after === null || h.qty_after === undefined) ? '—' : h.qty_after;
+ const action = h.action || 'change';
+ const actionLabel = action === 'add' ? 'Added' : (action === 'delete' ? 'Deleted' : 'Adjusted');
 
-                return `
-                    <div class="history-item">
-                        <div class="history-left">
-                            <div style="font-weight: 600; color: #111827;">${actionLabel}: ${name}</div>
-                            <div class="history-meta">Delta: ${formatHistoryDelta(delta)} &nbsp;|&nbsp; Qty: ${before} → ${after}</div>
-                        </div>
-                        <div class="history-right">${formatTimeOnly(h.created_at)}</div>
-                    </div>
-                `;
-            }).join('');
-        }
+ return `
+ <div class="history-item">
+ <div class="history-left">
+ <div style="font-weight: 600; color: #111827;">${actionLabel}: ${name}</div>
+ <div class="history-meta">Delta: ${formatHistoryDelta(delta)} &nbsp;|&nbsp; Qty: ${before} → ${after}</div>
+ </div>
+ <div class="history-right">${formatTimeOnly(h.created_at)}</div>
+ </div>
+ `;
+ }).join('');
+ }
 
         function setHistoryMode(mode) {
             historyMode = mode;

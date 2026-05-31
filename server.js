@@ -46,11 +46,28 @@ async function logHistory(entry) {
  created_at: new Date().toISOString(),
  };
 
+ try {
  const { error } = await supabaseAdmin
  .from('inventory_history')
  .insert([payload]);
 
- if (error) throw error;
+ if (error) {
+ // If table_number column doesn't exist yet, retry without it
+ const msg = String(error.message || '').toLowerCase();
+ const shouldRetry = msg.includes('table_number') || msg.includes('column') || msg.includes('schema');
+ if (shouldRetry) {
+ const { error: retryErr } = await supabaseAdmin
+ .from('inventory_history')
+ .insert([{ ...payload, table_number: null }]);
+ if (retryErr) throw retryErr;
+ return;
+ }
+ throw error;
+ }
+ } catch (err) {
+ // Don't throw from logging helper; callers decide whether to fail the request.
+ console.error('History log failed:', err.message);
+ }
 }
 
 const requirePin = (req, res, next) => {
