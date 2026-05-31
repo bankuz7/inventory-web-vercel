@@ -105,6 +105,7 @@ app.get('/api/history', async (req, res) => {
  const rawLimit = req.query.limit || '300';
  const limit = Math.min(Math.max(parseInt(rawLimit, 10), 1), 1000);
  const tableNumber = req.query.table_number ? String(req.query.table_number).trim() : null;
+ const dateFilter = req.query.date ? String(req.query.date).trim() : null;
  const { data, error } = await supabasePublic
  .from('inventory_history')
  .select('id,item_id,item_name,action,delta,qty_before,qty_after,table_number,created_at')
@@ -113,9 +114,26 @@ app.get('/api/history', async (req, res) => {
 
  if (error) throw error;
 
- const filtered = tableNumber
- ? (data || []).filter(row => row.table_number === tableNumber)
- : data;
+ let filtered = data || [];
+ if (tableNumber) {
+ filtered = filtered.filter(row => row.table_number === tableNumber);
+ }
+ if (dateFilter === 'today') {
+ const now = new Date();
+ const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+ filtered = filtered.filter(row => {
+ const d = new Date(row.created_at);
+ return d >= start;
+ });
+ } else if (dateFilter === 'yesterday') {
+ const now = new Date();
+ const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+ const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+ filtered = filtered.filter(row => {
+ const d = new Date(row.created_at);
+ return d >= start && d < end;
+ });
+ }
 
  res.json(filtered || []);
  } catch (err) {
