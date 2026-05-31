@@ -14,7 +14,19 @@
         h1 { color: #1f2937; font-size: 22px; font-weight: 600; margin-top: 0; }
         .admin-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px; margin-bottom: 25px; }
         .admin-header-left { display: flex; align-items: center; gap: 15px; }
-        .admin-profile-pic { width: 60px; height: 60px; min-width: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #3b82f6; }
+        .admin-profile-pic {
+  width: 60px;
+  height: 60px;
+  min-width: 60px;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center top;
+  border: 2px solid #3b82f6;
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+  -webkit-user-drag: none;
+  user-select: none;
+}
         .panel { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 25px; }
         .panel-title { font-weight: 600; color: #4b5563; margin-bottom: 15px; display: block; font-size: 16px; }
         .form-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -178,7 +190,7 @@
  </tr>
  </thead>
  <tbody id="inventoryBody">
- <tr><td colspan="3" style="text-align:center; color: #6b7280; padding: 30px;">Loading database...</td></tr>
+ <tr><td colspan="3" style="text-align:center; color: #6b7280; padding: 30px;" id="loading-cell">Loading database…</td></tr>
  </tbody>
  </table>
  </div>

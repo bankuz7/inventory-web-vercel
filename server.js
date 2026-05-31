@@ -4,19 +4,36 @@ const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
-app.use(express.static('public'));
+// CORS with configurable origin list
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'https://inventory-web-vercel.vercel.app,http://localhost:3000').split(',');
+const corsMiddleware = cors({ origin: allowedOrigins, credentials: true });
+app.use((req, res, next) => {
+  corsMiddleware(req, res, (err) => {
+    if (err) {
+      res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      return res.status(400).json({ error: 'CORS error: ' + err.message });
+    }
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+    next();
+  });
+});
+
+app.use(express.json({ limit: '1mb' }));
+app.use(express.static('public', { maxAge: '1d', etag: true }));
+
+// Request logger (after CORS so preflight is clean)
+app.use((req, _res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  next();
+});
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY; // server-only secret
-
-const ADMIN_PIN = process.env.ADMIN_PIN || '9712';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  // fail fast with a helpful message
-  console.error('Missing SUPABASE_URL / SUPABASE_ANON_KEY environment variables');
+  console.error('Missing SUPABASE_URL / SUPABASE_ANON_KEY environment variables — server may not function correctly.');
 }
 
 // Public client (used for report page reads)
@@ -99,46 +116,46 @@ app.get('/api/inventory', async (req, res) => {
 });
 
 // PUBLIC: Recent change history (for report page)
-// Supports optional table filtering: /api/history?table_number=D3&limit=100
+// Supports optional filtering: ?table_number=D3&date=today&limit=100
 app.get('/api/history', async (req, res) => {
- try {
- const rawLimit = req.query.limit || '300';
- const limit = Math.min(Math.max(parseInt(rawLimit, 10), 1), 1000);
- const tableNumber = req.query.table_number ? String(req.query.table_number).trim() : null;
- const dateFilter = req.query.date ? String(req.query.date).trim() : null;
- const { data, error } = await supabasePublic
- .from('inventory_history')
- .select('id,item_id,item_name,action,delta,qty_before,qty_after,table_number,created_at')
- .order('created_at', { ascending: false })
- .limit(limit);
+  try {
+    const rawLimit = req.query.limit || '300';
+    const limit = Math.min(Math.max(parseInt(rawLimit, 10), 1), 1000);
+    const tableNumber = req.query.table_number ? String(req.query.table_number).trim() : null;
+    const dateFilter = req.query.date ? String(req.query.date).trim() : null;
 
- if (error) throw error;
+    // Build Supabase query with server-side filters
+    let query = supabasePublic
+      .from('inventory_history')
+      .select('id,item_id,item_name,action,delta,qty_before,qty_after,table_number,created_at');
 
- let filtered = data || [];
- if (tableNumber) {
- filtered = filtered.filter(row => row.table_number === tableNumber);
- }
- if (dateFilter === 'today') {
- const now = new Date();
- const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
- filtered = filtered.filter(row => {
- const d = new Date(row.created_at);
- return d >= start;
- });
- } else if (dateFilter === 'yesterday') {
- const now = new Date();
- const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
- const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
- filtered = filtered.filter(row => {
- const d = new Date(row.created_at);
- return d >= start && d < end;
- });
- }
+    if (tableNumber) {
+      query = query.eq('table_number', tableNumber);
+    }
 
- res.json(filtered || []);
- } catch (err) {
- res.status(500).json({ error: err.message });
- }
+    query = query.order('created_at', { ascending: false }).limit(limit);
+
+    // Push date filtering down to the DB where possible
+    if (dateFilter === 'today' || dateFilter === 'yesterday') {
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (dateFilter === 'yesterday' ? 1 : 0));
+      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (dateFilter === 'yesterday' ? 0 : 1));
+      query = query
+        .gte('created_at', start.toISOString())
+        .lt('created_at', end.toISOString());
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    const filtered = Array.isArray(data) ? data : [];
+
+    res.json(filtered || []);
+  } catch (err) {
+    console.error('/api/history error:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 
