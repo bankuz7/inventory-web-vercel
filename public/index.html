@@ -64,42 +64,105 @@
         <span id="login-error"></span>
     </div>
 
-    <div id="dashboard" class="container">
-        <div class="admin-header">
-            <div class="admin-header-left">
-                <img src="admin-profile.jpg" alt="Admin" class="admin-profile-pic">
-                <h1 style="margin: 0;">Admin Control Panel</h1>
-            </div>
-            <button class="btn-download" onclick="exportToExcel()">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                Export Excel
-            </button>
-        </div>
-        
-        <div class="panel">
-            <span class="panel-title">Add New Item</span>
-            <div class="form-group">
-                <input type="text" id="itemName" placeholder="Item Name (e.g., Rice)" style="flex: 2;">
-                <select id="itemCategory" style="flex: 1;">
-                    <option value="General">General</option>
-                    <option value="Spices">Spices</option>
-                    <option value="Vegetables">Vegetables</option>
-                    <option value="Meat">Meat</option>
-                    <option value="Drinks">Drinks</option>
-                    <option value="Packaging">Packaging</option>
-                </select>
-                <input type="number" id="itemQty" placeholder="Qty" value="0" style="flex: 1;">
-                <button class="btn-add" onclick="addItem()" style="flex: 1;">Add Item</button>
-            </div>
-            <span id="status-msg"></span>
-        </div>
+ <div id="dashboard" class="container">
+ <div class="admin-header">
+ <div class="admin-header-left">
+ <img src="admin-profile.jpg" alt="Admin" class="admin-profile-pic">
+ <h1 style="margin: 0;">Admin Control Panel</h1>
+ </div>
+ <button class="btn-download" onclick="exportToExcel()">
+ <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+ Export Excel
+ </button>
+ </div>
+ 
+ <div class="panel">
+ <span class="panel-title">Add New Item</span>
+ <div class="form-group">
+ <input type="text" id="itemName" placeholder="Item Name (e.g., Rice)" style="flex: 2;">
+ <select id="itemCategory" style="flex: 1;">
+ <option value="General">General</option>
+ <option value="Spices">Spices</option>
+ <option value="Vegetables">Vegetables</option>
+ <option value="Meat">Meat</option>
+ <option value="Drinks">Drinks</option>
+ <option value="Packaging">Packaging</option>
+ </select>
+ <input type="number" id="itemQty" placeholder="Qty" value="0" style="flex: 1;">
+ <button class="btn-add" onclick="addItem()" style="flex: 1;">Add Item</button>
+ </div>
+ <span id="status-msg"></span>
+ </div>
+ 
+ <div style="background:#ffffff;margin-bottom:24px;padding:24px;border-radius:10px;box-shadow:rgba(0,0,0,0.06) 0px 0px 0px 1px,rgba(0,0,0,0.04) 0px 2px 2px,rgba(0,0,0,0.04) 0px 8px 8px -8px,#fafafa 0px 0px 0px 1px;">
+ <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+ <div>
+ <div style="font-size:18px;font-weight:600;color:#111827;letter-spacing:-0.3px;">Dining Tables</div>
+ <div style="font-size:13px;color:#6b7280;margin-top:4px;">Assign stock items to a table and track what was moved.</div>
+ </div>
+ <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+ <select id="tableSelect" style="padding:10px 12px;border:1px solid #e5e7eb;border-radius:6px;background:#ffffff;color:#111827;">
+ <option value="" disabled selected>Select table</option>
+ </select>
+ <button onclick="openTablePanel()" style="background:#0a0a0a;color:#ffffff;font-weight:500;">Manage Table</button>
+ </div>
+ </div>
+ <span id="tableStatus" style="font-size:13px;color:#111827;font-weight:500;"></span>
 
+ <div id="tableSection" style="display:none;margin-top:18px;border-top:1px solid #e5e7eb;padding-top:18px;">
+ <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+ <div>
+ <div style="font-size:13px;color:#374151;font-weight:500;margin-bottom:8px;">Assign from Stock</div>
+ <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+ <select id="tableItemSelect" style="min-width:220px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:6px;background:#ffffff;">
+ <option value="" disabled selected>Item</option>
+ </select>
+ <input type="number" id="tableItemQty" value="1" min="1" style="width:100px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:6px;">
+ <button onclick="assignItemToTable()" style="background:#047857;color:#ffffff;font-weight:500;">Assign</button>
+ </div>
+ <div id="tableAssignmentMessage" style="font-size:13px;margin-top:8px;min-height:18px;"></div>
+ </div>
+ <div style="color:#6b7280;font-size:12px;line-height:1.4;max-width:240px;">
+ Stock is reduced when assigned. Reverting an assignment will add the qty back to stock.
+ </div>
+ </div>
+
+ <div style="margin-top:20px;">
+ <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+ <div style="font-size:13px;color:#374151;font-weight:500;">Table History</div>
+ <div id="tableHistoryClear" style="display:none;">
+ <button style="background:#ffffff;color:#ef4444;padding:4px 8px;border-radius:9999px;font-size:11px;box-shadow:rgba(0,0,0,0.06) 0px 0px 0px 1px;" onclick="clearTableHistory()">Clear</button>
+ </div>
+ </div>
+ <div style="overflow-x:auto;background:#ffffff;box-shadow:rgba(0,0,0,0.06) 0px 0px 0px 1px,rgba(0,0,0,0.04) 0px 2px 2px;border-radius:10px;">
+ <table style="width:100%;border-collapse:collapse;min-width:620px;">
+ <thead>
+ <tr style="border-bottom:1px solid #e5e7eb;">
+ <th style="background:#fafafa;color:#4b5563;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:10px 12px;text-align:left;">Time</th>
+ <th style="background:#fafafa;color:#4b5563;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:10px 12px;text-align:left;">Item</th>
+ <th style="background:#fafafa;color:#4b5563;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:10px 12px;text-align:left;">Action</th>
+ <th style="background:#fafafa;color:#4b5563;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:10px 12px;text-align:left;">Change</th>
+ <th style="background:#fafafa;color:#4b5563;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:10px 12px;text-align:left;">Qty Before</th>
+ <th style="background:#fafafa;color:#4b5563;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:10px 12px;text-align:left;">Qty After</th>
+ </tr>
+ </thead>
+ <tbody id="tableHistoryBody">
+ <tr>
+ <td colspan="6" style="color:#6b7280;font-size:13px;padding:12px;">No entries yet for this table.</td>
+ </tr>
+ </tbody>
+ </table>
+ </div>
+ </div>
+ </div>
+ </div>
+ 
  <div class="panel" style="background: #ffffff; padding: 0; border: none;">
  <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 5px; margin-bottom: 10px;">
  <span class="panel-title" style="margin: 0;">Current Stock Level</span>
  </div>
  <input type="text" id="searchInput" class="search-bar" placeholder="Search products..." onkeyup="filterTable()">
-
+ 
  <div class="table-responsive">
  <table id="inventoryTable">
  <thead>
@@ -115,70 +178,7 @@
  </table>
  </div>
  </div>
-
-<div style="background:#ffffff;margin-top:24px;padding:24px;border-radius:10px;box-shadow:rgba(0,0,0,0.06) 0px 0px 0px 1px,rgba(0,0,0,0.04) 0px 2px 2px,rgba(0,0,0,0.04) 0px 8px 8px -8px,#fafafa 0px 0px 0px 1px;">
-<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
-<div>
-<div style="font-size:18px;font-weight:600;color:#111827;letter-spacing:-0.3px;">Dining Tables</div>
-<div style="font-size:13px;color:#6b7280;margin-top:4px;">Assign stock items to a table and track what was moved.</div>
-</div>
-<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-<select id="tableSelect" style="padding:10px 12px;border:1px solid #e5e7eb;border-radius:6px;background:#ffffff;color:#111827;">
-<option value="" disabled selected>Select table</option>
-</select>
-<button onclick="openTablePanel()" style="background:#0a0a0a;color:#ffffff;font-weight:500;">Manage Table</button>
-</div>
-</div>
-<span id="tableStatus" style="font-size:13px;color:#111827;font-weight:500;"></span>
-
-<div id="tableSection" style="display:none;margin-top:18px;border-top:1px solid #e5e7eb;padding-top:18px;">
-<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
-<div>
-<div style="font-size:13px;color:#374151;font-weight:500;margin-bottom:8px;">Assign from Stock</div>
-<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-<select id="tableItemSelect" style="min-width:220px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:6px;background:#ffffff;">
-<option value="" disabled selected>Item</option>
-</select>
-<input type="number" id="tableItemQty" value="1" min="1" style="width:100px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:6px;">
-<button onclick="assignItemToTable()" style="background:#047857;color:#ffffff;font-weight:500;">Assign</button>
-</div>
-<div id="tableAssignmentMessage" style="font-size:13px;margin-top:8px;min-height:18px;"></div>
-</div>
-<div style="color:#6b7280;font-size:12px;line-height:1.4;max-width:240px;">
-Stock is reduced when assigned. Reverting an assignment will add the qty back to stock.
-</div>
-</div>
-
-<div style="margin-top:20px;">
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-<div style="font-size:13px;color:#374151;font-weight:500;">Table History</div>
-<div id="tableHistoryClear" style="display:none;">
-<button style="background:#ffffff;color:#ef4444;padding:4px 8px;border-radius:9999px;font-size:11px;box-shadow:rgba(0,0,0,0.06) 0px 0px 0px 1px;" onclick="clearTableHistory()">Clear</button>
-</div>
-</div>
-<div style="overflow-x:auto;background:#ffffff;box-shadow:rgba(0,0,0,0.06) 0px 0px 0px 1px,rgba(0,0,0,0.04) 0px 2px 2px;border-radius:10px;">
-<table style="width:100%;border-collapse:collapse;min-width:620px;">
-<thead>
-<tr style="border-bottom:1px solid #e5e7eb;">
-<th style="background:#fafafa;color:#4b5563;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:10px 12px;text-align:left;">Time</th>
-<th style="background:#fafafa;color:#4b5563;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:10px 12px;text-align:left;">Item</th>
-<th style="background:#fafafa;color:#4b5563;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:10px 12px;text-align:left;">Action</th>
-<th style="background:#fafafa;color:#4b5563;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:10px 12px;text-align:left;">Change</th>
-<th style="background:#fafafa;color:#4b5563;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:10px 12px;text-align:left;">Qty Before</th>
-<th style="background:#fafafa;color:#4b5563;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:10px 12px;text-align:left;">Qty After</th>
-</tr>
-</thead>
-<tbody id="tableHistoryBody">
-<tr>
-<td colspan="6" style="color:#6b7280;font-size:13px;padding:12px;">No entries yet for this table.</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-</div>
-
+ 
         <div class="footer-links">
             <span><button onclick="logout()" style="background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; padding: 6px 12px; font-size: 12px;">Logout</button></span>
             <a href="report.html" target="_blank">View Public Report &rarr;</a>
