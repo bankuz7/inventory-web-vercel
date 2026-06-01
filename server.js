@@ -146,10 +146,8 @@ app.get('/api/report/pdf', async (req, res) => {
  const { data: orders, error: oErr } = await q;
  if (oErr) throw oErr;
 
- // Get current stock too
  const { data: stock } = await supabase.from('cold_drinks').select('*').order('id');
 
- // Build drink map
  const dm = {};
  for (const o of (orders || [])) {
  if (o.cold_drinks && !dm[o.drink_id]) {
@@ -157,7 +155,6 @@ app.get('/api/report/pdf', async (req, res) => {
  }
  }
 
- // Group orders by table
  const tg = {};
  for (const o of (orders || [])) {
  if (!tg[o.table_number]) tg[o.table_number] = [];
@@ -165,18 +162,22 @@ app.get('/api/report/pdf', async (req, res) => {
  }
 
  const doc = new PDFDocument({ margin: 50, size: 'A4' });
+ const chunks = [];
+ doc.on('data', chunk => chunks.push(chunk));
+ doc.on('end', () => {
+ const buf = Buffer.concat(chunks);
  const fn = selTable ? 'table-' + selTable + '-report.pdf' : 'full-inventory-report.pdf';
  res.setHeader('Content-Type', 'application/pdf');
  res.setHeader('Content-Disposition', 'attachment; filename="' + fn + '"');
- doc.pipe(res);
+ res.setHeader('Content-Length', buf.length);
+ res.send(buf);
+ });
 
- // ── Header ──────────────────────────────────────────
  doc.fillColor('#1a3c34').fontSize(22).font('Helvetica-Bold').text("The Barkat's Heaven", { align: 'center' });
  doc.fillColor('#2d6a4f').fontSize(12).text('Cold Drink Inventory Report', { align: 'center' });
  doc.fillColor('#666').fontSize(9).font('Helvetica').text('Date: ' + dateStr + '  ·  Time: ' + timeStr, { align: 'center' });
  doc.moveDown(1);
 
- // ── Summary box ─────────────────────────────────────
  const totalStock = (stock || []).reduce((s, d) => s + (parseInt(d.stock_qty) || 0), 0);
  const totalTypes = (stock || []).length;
  const totalOrders = (orders || []).length;
@@ -184,12 +185,11 @@ app.get('/api/report/pdf', async (req, res) => {
 
  doc.fillColor('#1a3c34').fontSize(10).font('Helvetica-Bold').text('SUMMARY', { align: 'left' });
  doc.moveDown(0.2);
- doc.fillColor('#2d6a4f').fontSize(9).font('Helvetica').text('  ' + totalTypes + ' drink types in fridge  ·  ' + totalStock + ' total stock  ·  ' + tablesServed + ' tables served  ·  ' + totalOrders + ' items ordered');
+ doc.fillColor('#2d6a4f').fontSize(9).font('Helvetica').text('  ' + totalTypes + ' drink types  ·  ' + totalStock + ' total stock  ·  ' + tablesServed + ' tables  ·  ' + totalOrders + ' orders');
  doc.moveDown(0.5);
  doc.strokeColor('#b8d4c8').lineWidth(1).moveTo(50, doc.y).lineTo(545, doc.y).stroke();
  doc.moveDown(0.6);
 
- // ── Stock Overview ──
  const sm = selTable ? 'Table #' + selTable : 'All Tables';
  doc.fillColor('#1a3c34').fontSize(11).font('Helvetica-Bold').text('📦 Stock Overview - ' + sm, { align: 'left' });
  doc.moveDown(0.3);
@@ -198,15 +198,13 @@ app.get('/api/report/pdf', async (req, res) => {
  doc.fillColor('#999').fontSize(9).font('Helvetica').text('  No drinks in fridge yet.');
  doc.moveDown(0.4);
  } else {
- // Table header
  doc.fillColor('#fff').font('Helvetica-Bold').fontSize(9);
  doc.rect(50, doc.y, 495, 18).fill('#2d6a4f');
  doc.fillColor('#fff').text('Drink', 55, doc.y, { width: 220 }).text('Category', 280, doc.y, { width: 100 }).text('Stock', 385, doc.y, { width: 70 }).text('Unit', 460, doc.y, { width: 70 });
  doc.y += 20;
 
- // Rows
  (stock || []).forEach((s, i) => {
- const bg = i % 2 === 0 ? '#f9f9f9' : '#ffffff';
+ const bg = i % 2 === 0 ? '#f4faf6' : '#ffffff';
  doc.fillColor(bg).rect(50, doc.y, 495, 16).fill();
  doc.fillColor('#2c1810').font('Helvetica').text(s.name, 55, doc.y + 3, { width: 220, height: 12 });
  doc.text(s.category || '-', 280, doc.y + 3, { width: 100, height: 12 });
@@ -218,10 +216,9 @@ app.get('/api/report/pdf', async (req, res) => {
  }
  doc.moveDown(0.6);
 
- // ── Orders detail ──
  if (selTable) {
  doc.addPage();
- doc.fillColor('#1a3c34').fontSize(13).font('Helvetica-Bold').text('Table #' + selTable + ' Today\'s Orders', { align: 'center' });
+ doc.fillColor('#1a3c34').fontSize(13).font('Helvetica-Bold').text('Table #' + selTable + ' Orders', { align: 'center' });
  doc.moveDown(0.3);
  drawOrders(doc, tg[selTable] || [], dm);
  } else {
