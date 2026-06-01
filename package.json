@@ -1,18 +1,16 @@
 {
-  "name": "inventory-web",
+  "name": "inventory-web-vercel",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "The Barkat's Heaven - Drink Inventory Tracker (Table-wise)",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "dev": "node server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "@supabase/supabase-js": "^2.106.2",
-    "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "sqlite3": "^6.0.1"
+    "express": "^4.18.2",
+    "@supabase/supabase-js": "^2.39.0",
+    "pdfkit": "^0.13.0",
+    "dotenv": "^16.3.1"
   }
 }

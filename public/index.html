@@ -1,15 +1,4 @@
-require('dotenv').config();
-const express = require('express');
-const { createClient } = require('@supabase/supabase-js');
-const PDFDocument = require('pdfkit');
-const app = express();
-app.use(express.json());
-
-const URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabase = createClient(URL, KEY);
-
-const INDEX_HTML = `<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -57,7 +46,7 @@ select option{color:#2c1810}
 </head>
 <body>
 <div class="header">
-  <div class="logo">\\u{1F379}</div>
+  <div class="logo">🍹</div>
   <div><h1>The Barkat's Heaven</h1><div class="sub">Drink Inventory &amp; Table Tracker</div></div>
 </div>
 <div class="container">
@@ -128,119 +117,9 @@ async function addOrd(){const t=document.getElementById('ot').value;const d=docu
 async function ldOrd(){try{const r=await api('/api/orders');const o=await r.json();const l=document.getElementById('ol'),em=document.getElementById('oe');if(!o.length){l.innerHTML='';em.style.display='block';return;}em.style.display='none';l.innerHTML=o.slice(0,50).map(x=>{const p=x.drinks?x.drinks.price:0;return '<div class="ocard"><div class="inf"><strong>Table '+x.table_number+'</strong> - '+(x.drinks?esc(x.drinks.name):'?')+' x'+x.quantity+' = Rs '+(p*x.quantity).toFixed(2)+(x.notes?'<br><small>'+esc(x.notes)+'</small>':'')+'</div><button class="del" onclick="dlOrd('+x.id+')">x</button></div>';}).join('');}catch(e){alert(e.message);}}
 async function dlOrd(id){if(!confirm('Remove?'))return;try{await api('/api/orders/'+id,'DELETE');ldOrd();}catch(e){alert(e.message);}}
 async function ldTOpt(){try{const r=await api('/api/orders/summary');const t=await r.json();const s=document.getElementById('rt');s.innerHTML='<option value="">All Tables</option>';t.forEach(x=>{s.innerHTML+='<option value="'+x.table_number+'">Table '+x.table_number+' ('+x.totalOrders+')</option>';});}catch(e){}}
-async function ldSum(){try{const r=await api('/api/orders/summary');const t=await r.json();const l=document.getElementById('sl'),em=document.getElementById('se');if(!t.length){l.innerHTML='';em.style.display='block';return;}em.style.display='none';l.innerHTML=t.map(x=>'<div class="ocard"><div class="inf"><strong>Table '+x.table_number+'</strong> - '+x.totalOrders+' orders</div><button class="btn btn-s btn-o" onclick="document.getElementById(\\'rt\\').value='+x.table_number+';dlPdf()">PDF</button></div>').join('');}catch(e){alert(e.message);}}
+async function ldSum(){try{const r=await api('/api/orders/summary');const t=await r.json();const l=document.getElementById('sl'),em=document.getElementById('se');if(!t.length){l.innerHTML='';em.style.display='block';return;}em.style.display='none';l.innerHTML=t.map(x=>'<div class="ocard"><div class="inf"><strong>Table '+x.table_number+'</strong> - '+x.totalOrders+' orders</div><button class="btn btn-s btn-o" onclick="document.getElementById(\'rt\').value='+x.table_number+';dlPdf()">PDF</button></div>').join('');}catch(e){alert(e.message);}}
 function dlPdf(){const v=document.getElementById('rt').value;window.open('/api/report/pdf'+(v?'?table='+v:''));}
 ldDrinks();
 </script>
 </body>
-</html>`;
-
-app.get('/', (req, res) => res.send(INDEX_HTML));
-app.get('/index.html', (req, res) => res.send(INDEX_HTML));
-
-app.get('/api/drinks', async (req, res) => {
-  try { const { data, error } = await supabase.from('drinks').select('*').order('name'); if (error) throw error; res.json(data || []); }
-  catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.post('/api/drinks', async (req, res) => {
-  try {
-    const { name, category, price, unit } = req.body;
-    const { data, error } = await supabase.from('drinks').insert([{ name, category: category||'Other', price: Number(price), unit: unit||'peg' }]).select().single();
-    if (error) throw error; res.json(data);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.put('/api/drinks/:id', async (req, res) => {
-  try {
-    const { id } = req.params; const { name, category, price, unit } = req.body;
-    const { data, error } = await supabase.from('drinks').update({ name, category, price: Number(price), unit }).eq('id', id).select().single();
-    if (error) throw error; res.json(data);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.delete('/api/drinks/:id', async (req, res) => {
-  try { const { error } = await supabase.from('drinks').delete().eq('id', req.params.id); if (error) throw error; res.json({ success: true }); }
-  catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.get('/api/orders', async (req, res) => {
-  try {
-    let q = supabase.from('table_orders').select('*, drinks(name,category,price,unit)').order('created_at', { ascending: false });
-    if (req.query.table) q = q.eq('table_number', parseInt(req.query.table));
-    const { data, error } = await q; if (error) throw error; res.json(data || []);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.get('/api/orders/summary', async (req, res) => {
-  try {
-    const { data, error } = await supabase.from('table_orders').select('table_number');
-    if (error) throw error;
-    const t = {}; for (const r of (data||[])) { if (!t[r.table_number]) t[r.table_number] = { table_number: r.table_number, totalOrders: 0 }; t[r.table_number].totalOrders++; }
-    res.json(Object.values(t).sort((a,b) => a.table_number - b.table_number));
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.post('/api/orders', async (req, res) => {
-  try {
-    const { table_number, drink_id, quantity, notes } = req.body;
-    const { data, error } = await supabase.from('table_orders').insert([{ table_number: parseInt(table_number), drink_id: parseInt(drink_id), quantity: quantity||1, notes }]).select().single();
-    if (error) throw error; res.json(data);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.delete('/api/orders/:id', async (req, res) => {
-  try { const { error } = await supabase.from('table_orders').delete().eq('id', req.params.id); if (error) throw error; res.json({ success: true }); }
-  catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.get('/api/report/pdf', async (req, res) => {
-  try {
-    const sel = req.query.table ? parseInt(req.query.table) : null;
-    let q = supabase.from('table_orders').select('*, drinks(name,category,price,unit)').order('created_at');
-    if (sel) q = q.eq('table_number', sel);
-    const { data: orders, error } = await q; if (error) throw error;
-    const dm = {};
-    for (const o of (orders||[])) { if (o.drinks && !dm[o.drink_id]) dm[o.drink_id] = { name: o.drinks.name, price: parseFloat(o.drinks.price||0) }; }
-    const tg = {}; for (const o of (orders||[])) { if (!tg[o.table_number]) tg[o.table_number] = []; tg[o.table_number].push(o); }
-
-    const doc = new PDFDocument({ margin: 50 });
-    const fn = sel ? 'report-table-'+sel+'.pdf' : 'report-all.pdf';
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename="'+fn+'"');
-    doc.pipe(res);
-    doc.fontSize(20).font('Helvetica-Bold').text("The Barkat's Heaven", { align: 'center' });
-    doc.fontSize(14).text('Drink Inventory Report', { align: 'center' });
-    doc.fontSize(9).font('Helvetica').text('Generated: ' + new Date().toLocaleString('en-IN'), { align: 'center' });
-    doc.moveDown(0.8);
-
-    if (sel) {
-      doc.fontSize(12).font('Helvetica-Bold').text('Table #'+sel, { align: 'center' }); doc.moveDown(0.4);
-      drawOrders(doc, tg[sel]||[], dm);
-    } else {
-      const tns = Object.keys(tg).sort((a,b) => a-b); let gt = 0;
-      for (const t of tns) { doc.addPage(); doc.fontSize(13).font('Helvetica-Bold').text('Table #'+t, { align: 'center' }); doc.moveDown(0.4); gt += drawOrders(doc, tg[t], dm); }
-      doc.addPage(); doc.fontSize(16).font('Helvetica-Bold').text('Overall Summary', { align: 'center' }); doc.moveDown(0.6);
-      doc.font('Helvetica-Bold').text('Table',55); doc.text('Orders',130); doc.text('Amount',240); doc.text('Total',340);
-      doc.moveTo(50, doc.y).lineTo(460, doc.y).stroke(); doc.moveDown(0.3);
-      for (const t of tns) { const o=tg[t]||[]; let tv=0; o.forEach(x=>{const d=dm[x.drink_id]; tv+=(d?d.price:0)*x.quantity;}); doc.font('Helvetica').text('Table '+t+'          '+o.length+' orders          Rs '+tv.toFixed(2),55); }
-      doc.moveDown(0.4); doc.font('Helvetica-Bold').text('GRAND TOTAL                    Rs '+gt.toFixed(2));
-    }
-    doc.end();
-  } catch (e) { console.error(e); res.status(500).json({ error: e.message }); }
-});
-
-function drawOrders(doc, orders, dm) {
-  let tot = 0;
-  doc.font('Helvetica-Bold'); doc.text('#',55); doc.text('Drink',85); doc.text('Qty',215); doc.text('Price',255); doc.text('Amount',325);
-  doc.moveTo(50, doc.y).lineTo(460, doc.y).stroke(); doc.moveDown(0.3);
-  for (const o of orders) {
-    const d = dm[o.drink_id]||{name:'?',price:0}; const a = d.price*o.quantity; tot+=a;
-    doc.font('Helvetica'); doc.text(String(o.table_number),55); doc.text(d.name+(o.notes?' ('+o.notes+')':''),85); doc.text(String(o.quantity),215);
-    doc.text('Rs '+d.price.toFixed(2),255); doc.text('Rs '+a.toFixed(2),325); doc.moveDown(0.25);
-  }
-  doc.moveDown(0.4); doc.font('Helvetica-Bold').text('Table Total:                     Rs '+tot.toFixed(2)); return tot;
-}
-
-const port = process.env.PORT || 3000;
-app.listen(port, () => console.log('Server: '+port));
+</html>
