@@ -47,73 +47,72 @@ select option{color:#2c1810}
 </head>
 <body>
 <div class="header">
-  <div class="logo">\U0001F9C0</div>
-  <div><h1>The Barkat's Heaven</h1><div style="font-size:.7rem;opacity:.8">Cold Drink Inventory - Fridge to Table</div></div>
+ <div class="logo">🍹</div>
+ <div><h1>The Barkat's Heaven</h1><div style="font-size:.7rem;opacity:.8">Cold Drink Inventory - Fridge to Table</div></div>
 </div>
 <div class="ctr">
-  <div class="nav">
-    <button class="active" onclick="sw('stock')">Fridge Stock</button>
-    <button onclick="sw('orders')">Serve Order</button>
-    <button onclick="sw('report')">PDF Report</button>
-  </div>
+ <div class="nav">
+ <button class="active" onclick="sw('stock')">Fridge Stock</button>
+ <button onclick="sw('orders')">Serve Order</button>
+ <button onclick="sw('report')">PDF Report</button>
+ </div>
 
-  <!-- STOCK TAB -->
-  <div id="t-stock" class="tab">
-    <div class="crd" style="background:#f0fff4;border:2px dashed #2d6a4f">
-      <h2>+ Add New Cold Drink to Fridge</h2>
-      <div class="row">
-        <label>Name</label><input id="an" placeholder="Coca-Cola">
-        <label>Category</label><select id="ac"><option>Soda</option><option>Mango</option><option>Water</option><option>Energy</option><option>Other</option></select>
-      </div>
-      <div class="row">
-        <label>Price (Rs)</label><input id="ap" type="number" placeholder="40">
-        <label>Unit</label><input id="au" placeholder="bottle" value="bottle">
-        <label>Stock Qty</label><input id="aq" type="number" placeholder="24" value="24" min="0">
-      </div>
-      <button class="btn btn-w" onclick="addDrink()">Add to Fridge</button>
-      <div id="as" class="sts"></div>
-    </div>
-    <div class="crd">
-      <h2>Fridge Stock <button class="btn btn-w" onclick="ldStock()" style="float:right;font-size:.7rem">Refresh</button></h2>
-      <div id="sg" class="grid"></div>
-      <div id="se" class="empty">No drinks added yet. Add your first cold drink above!</div>
-    </div>
-  </div>
+ <!-- STOCK TAB -->
+ <div id="t-stock" class="tab">
+ <div class="crd" style="background:#f0fff4;border:2px dashed #2d6a4f">
+ <h2>+ Add New Cold Drink to Fridge</h2>
+ <div class="row">
+  <label>Name</label><input id="an" placeholder="Coca-Cola">
+  <label>Category</label><select id="ac"><option>Soda</option><option>Mango</option><option>Water</option><option>Energy</option><option>Other</option></select>
+ </div>
+ <div class="row">
+  <label>Unit</label><input id="au" placeholder="bottle" value="bottle">
+  <label>Stock Qty</label><input id="aq" type="number" placeholder="24" value="24" min="0">
+ </div>
+ <button class="btn btn-w" onclick="addDrink()">Add to Fridge</button>
+ <div id="as" class="sts"></div>
+ </div>
+ <div class="crd">
+ <h2>Fridge Stock <button class="btn btn-w" onclick="ldStock()" style="float:right;font-size:.7rem">Refresh</button></h2>
+ <div id="sg" class="grid"></div>
+ <div id="se" class="empty">No drinks added yet. Add your first cold drink above!</div>
+ </div>
+ </div>
 
-  <!-- ORDERS TAB -->
-  <div id="t-orders" class="tab" style="display:none">
-    <div class="crd">
-      <h2>Serve to Table</h2>
-      <div class="row">
-        <label>Table</label><select id="ot"><script>for(let i=1;i<=30;i++) document.write('<option>'+i+'</option>')</script></select>
-        <label>Drink</label><select id="od"><option>-- select drink --</option></select>
-      </div>
-      <div class="row">
-        <label>Qty</label><input id="oq" type="number" value="1" min="1" max="20">
-        <label>Note</label><input id="on" placeholder="masala / extra">
-      </div>
-      <button class="btn" onclick="serve()">Serve (Stock kam hoga)</button>
-      <div id="os" class="sts"></div>
-    </div>
-    <div class="crd">
-      <h2>Recent Orders</h2>
-      <div id="ol"></div>
-      <div id="oe" class="empty">No orders yet</div>
-    </div>
-  </div>
+ <!-- ORDERS TAB -->
+ <div id="t-orders" class="tab" style="display:none">
+ <div class="crd">
+ <h2>Serve to Table</h2>
+ <div class="row">
+  <label>Table</label><select id="ot"><script>for(let i=1;i<=30;i++) document.write('<option>'+i+'</option>')</script></select>
+  <label>Drink</label><select id="od"><option>-- select drink --</option></select>
+ </div>
+ <div class="row">
+  <label>Qty</label><input id="oq" type="number" value="1" min="1" max="20">
+  <label>Note</label><input id="on" placeholder="masala / extra">
+ </div>
+ <button class="btn" onclick="serve()">Serve (Stock kam hoga)</button>
+ <div id="os" class="sts"></div>
+ </div>
+ <div class="crd">
+ <h2>Today's Orders</h2>
+ <div id="ol"></div>
+ <div id="oe" class="empty">No orders yet</div>
+ </div>
+ </div>
 
-  <!-- REPORT TAB -->
-  <div id="t-report" class="tab" style="display:none">
-    <div class="crd">
-      <h2>Download PDF Report</h2>
-      <div class="row">
-        <label>Filter</label>
-        <select id="rt"><option value="">All Tables - Full Stock + Orders</option><script>for(let i=1;i<=30;i++) document.write('<option value="'+i+'">Table '+i+'</option>')</script></select>
-      </div>
-      <button class="btn" onclick="dlPdf()" style="margin-top:6px">Download PDF</button>
-      <div id="rs" class="sts"></div>
-    </div>
-  </div>
+ <!-- REPORT TAB -->
+ <div id="t-report" class="tab" style="display:none">
+ <div class="crd">
+ <h2>📄 Download PDF Report</h2>
+ <div class="row">
+  <label>Filter</label>
+  <select id="rt"><option value="">All Tables - Full Report</option><script>for(let i=1;i<=30;i++) document.write('<option value="'+i+'">Table '+i+'</option>')</script></select>
+ </div>
+ <button class="btn btn-w" onclick="dlPdf()" style="margin-top:6px">Download PDF</button>
+ <div id="rs" class="sts"></div>
+ </div>
+ </div>
 </div>
 
 <script>
@@ -123,121 +122,111 @@ function sClass(s){if(s<=0)return 'st-out';if(s<=5)return 'st-low';return 'st-ok
 function sLabel(s){if(s<=0)return 'OUT';if(s<=5)return 'LOW';return 'OK';}
 
 function sw(t){
-  document.querySelectorAll('.tab').forEach(e=>e.style.display='none');
-  document.getElementById('t-'+t).style.display='block';
-  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
-  event.target.classList.add('active');
-  if(t==='stock')ldStock();
-  if(t==='orders'){ldSel();ldOrd();}
+ document.querySelectorAll('.tab').forEach(e=>e.style.display='none');
+ document.getElementById('t-'+t).style.display='block';
+ document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+ event.target.classList.add('active');
+ if(t==='stock')ldStock();
+ if(t==='orders'){ldSel();ldOrd();}
 }
 async function api(u,m,b){const r=await fetch(u,{method:m,headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):null});if(!r.ok){const e=await r.json();throw new Error(e.error||'err');}return r;}
 
 // ── ADD DRINK ──
 async function addDrink(){
-  const n=document.getElementById('an').value.trim();
-  const c=document.getElementById('ac').value;
-  const p=parseFloat(document.getElementById('ap').value);
-  const u=document.getElementById('au').value.trim()||'bottle';
-  const q=parseInt(document.getElementById('aq').value)||0;
-  if(!n)return alert('Enter drink name');
-  if(isNaN(p)||p<0)return alert('Enter valid price');
-  try{
-    await api('/api/drinks','POST',{name:n,category:c,price:p,unit:u,stock_qty:q});
-    document.getElementById('an').value='';
-    document.getElementById('ap').value='';
-    document.getElementById('aq').value='24';
-    ldStock();
-    showMsg('Added!');
-  }catch(e){alert(e.message);}
+ const n=document.getElementById('an').value.trim();
+ const c=document.getElementById('ac').value;
+ const u=document.getElementById('au').value.trim()||'bottle';
+ const q=parseInt(document.getElementById('aq').value)||0;
+ if(!n)return alert('Enter drink name');
+ try{
+  await api('/api/drinks','POST',{name:n,category:c,unit:u,stock_qty:q});
+  document.getElementById('an').value='';
+  document.getElementById('aq').value='24';
+  ldStock();showMsg('Added!');
+ }catch(e){alert(e.message);}
 }
 
 // ── STOCK ──
 async function ldStock(){
-  try{
-    const r=await api('/api/drinks');
-    drinks=await r.json();
-    const g=document.getElementById('sg'),e=document.getElementById('se');
-    if(!drinks.length){g.innerHTML='';e.style.display='block';return;}
-    e.style.display='none';
-    g.innerHTML=drinks.map(d=>{
-      return '<div class="dc '+sClass(d.stock_qty)+'"><div class="nm">'+esc(d.name)+'</div><div style="font-size:.68rem;color:#8b7355">'+esc(d.category)+'</div><div class="st">'+d.stock_qty+'</div><div class="lbl">'+sLabel(d.stock_qty)+'</div><div class="acts"><input type="number" id="rf-'+d.id+'" value="0" min="0" placeholder="+qty"><button class="btn-ref" onclick="refill('+d.id+')">Refill</button><button class="btn-del" onclick="delDrink('+d.id+')" style="font-size:.65rem">Del</button></div></div>';
-    }).join('');
-  }catch(e){alert(e.message);}
+ try{
+  const r=await api('/api/drinks');
+  drinks=await r.json();
+  const g=document.getElementById('sg'),e=document.getElementById('se');
+  if(!drinks.length){g.innerHTML='';e.style.display='block';return;}
+  e.style.display='none';
+  g.innerHTML=drinks.map(d=>{
+   return '<div class="dc '+sClass(d.stock_qty)+'"><div class="nm">'+esc(d.name)+'</div><div style="font-size:.68rem;color:#8b7355">'+esc(d.category)+'</div><div class="st">'+d.stock_qty+'</div><div class="lbl">'+sLabel(d.stock_qty)+' '+esc(d.unit||'pc')+'</div><div class="acts"><input type="number" id="rf-'+d.id+'" value="0" min="0" placeholder="+qty"><button class="btn-ref" onclick="refill('+d.id+')">Refill</button><button class="btn-del" onclick="delDrink('+d.id+')" style="font-size:.65rem">Del</button></div></div>';
+  }).join('');
+ }catch(e){alert(e.message);}
 }
 
 async function refill(id){
-  const inp=document.getElementById('rf-'+id);
-  const qty=parseInt(inp.value);
-  if(!qty||qty<=0)return alert('Enter qty');
-  try{
-    await api('/api/drinks/'+id+'/stock','PUT',{qty:drinks.find(d=>d.id==id).stock_qty+qty});
-    inp.value='0';
-    ldStock();
-    showMsg('Refilled!');
-  }catch(e){alert(e.message);}
+ const inp=document.getElementById('rf-'+id);
+ const qty=parseInt(inp.value);
+ if(!qty||qty<=0)return alert('Enter qty');
+ try{
+  await api('/api/drinks/'+id+'/stock','PUT',{qty:drinks.find(d=>d.id==id).stock_qty+qty});
+  inp.value='0';ldStock();showMsg('Refilled!');
+ }catch(e){alert(e.message);}
 }
 
 async function delDrink(id){
-  if(!confirm('Delete this drink?'))return;
-  try{await api('/api/drinks/'+id,'DELETE');ldStock();}catch(e){alert(e.message);}
+ if(!confirm('Delete this drink?'))return;
+ try{await api('/api/drinks/'+id,'DELETE');ldStock();}catch(e){alert(e.message);}
 }
 
 // ── ORDERS ──
 async function ldSel(){
-  try{
-    const r=await api('/api/drinks');
-    const d=await r.json();
-    const s=document.getElementById('od');
-    s.innerHTML=d.length?d.map(x=>'<option value="'+x.id+'">'+esc(x.name)+' (Rs '+x.price+') - '+x.stock_qty+' left</option>').join(''):'<option>No drinks - add in Fridge Stock</option>';
-  }catch(e){alert(e.message);}
+ try{
+  const r=await api('/api/drinks');
+  const d=await r.json();
+  const s=document.getElementById('od');
+  s.innerHTML=d.length?d.map(x=>'<option value="'+x.id+'">'+esc(x.name)+' - '+x.stock_qty+' left</option>').join(''):'<option>No drinks - add in Fridge Stock</option>';
+ }catch(e){alert(e.message);}
 }
 
 async function serve(){
-  const t=document.getElementById('ot').value;
-  const d=document.getElementById('od').value;
-  const q=parseInt(document.getElementById('oq').value)||1;
-  const n=document.getElementById('on').value.trim();
-  if(!d)return alert('Select drink');
-  try{
-    await api('/api/orders','POST',{table_number:parseInt(t),drink_id:parseInt(d),quantity:q,notes:n});
-    document.getElementById('on').value='';
-    document.getElementById('oq').value='1';
-    ldOrd();
-    showMsg('Served! Stock updated.');
-  }catch(e){alert(e.message);}
+ const t=document.getElementById('ot').value;
+ const d=document.getElementById('od').value;
+ const q=parseInt(document.getElementById('oq').value)||1;
+ const n=document.getElementById('on').value.trim();
+ if(!d)return alert('Select drink');
+ try{
+  await api('/api/orders','POST',{table_number:parseInt(t),drink_id:parseInt(d),quantity:q,notes:n});
+  document.getElementById('on').value='';document.getElementById('oq').value='1';
+  ldOrd();showMsg('Served! Stock updated.');
+ }catch(e){alert(e.message);}
 }
 
 async function ldOrd(){
-  try{
-    const r=await api('/api/orders');
-    const o=await r.json();
-    const l=document.getElementById('ol'),e=document.getElementById('oe');
-    if(!o.length){l.innerHTML='';e.style.display='block';return;}
-    e.style.display='none';
-    l.innerHTML=o.slice(0,30).map(x=>{
-      const nm=x.cold_drinks?esc(x.cold_drinks.name):'?';
-      const pr=x.cold_drinks?x.cold_drinks.price:0;
-      return '<div class="ocard"><div class="inf"><strong>Table #'+x.table_number+'</strong> - '+nm+' x'+x.quantity+' = Rs '+(pr*x.quantity).toFixed(2)+(x.notes?' <small>['+esc(x.notes)+']</small>':'')+'</div><button class="del" onclick="cancelOrd('+x.id+')" title="Cancel">x</button></div>';
-    }).join('');
-  }catch(e){alert(e.message);}
+ try{
+  const r=await api('/api/orders');
+  const o=await r.json();
+  const l=document.getElementById('ol'),e=document.getElementById('oe');
+  if(!o.length){l.innerHTML='';e.style.display='block';return;}
+  e.style.display='none';
+  l.innerHTML=o.slice(0,30).map(x=>{
+   const nm=x.cold_drinks?esc(x.cold_drinks.name):'?';
+   return '<div class="ocard"><div class="inf"><strong>Table #'+x.table_number+'</strong> - '+nm+' x'+x.quantity+(x.notes?' <small>['+esc(x.notes)+']</small>':'')+'</div><button class="del" onclick="cancelOrd('+x.id+')" title="Cancel">x</button></div>';
+  }).join('');
+ }catch(e){alert(e.message);}
 }
 
 async function cancelOrd(id){
-  if(!confirm('Cancel? Stock will be restored.'))return;
-  try{await api('/api/orders/'+id,'DELETE');ldOrd();ldStock();}
-  catch(e){alert(e.message);}
+ if(!confirm('Cancel this order? Stock will be restored.'))return;
+ try{await api('/api/orders/'+id,'DELETE');ldOrd();ldStock();}catch(e){alert(e.message);}
 }
 
 // ── REPORT ──
 function dlPdf(){
-  const v=document.getElementById('rt').value;
-  window.open('/api/report/pdf'+(v?'?table='+v:''));
+ const v=document.getElementById('rt').value;
+ const w=window.open('/api/report/pdf'+(v?'?table='+v:''));
+ const t=setTimeout(()=>{if(w)w.close()},200);
 }
 
 function showMsg(msg){
-  const s=document.getElementById('os');
-  s.textContent=msg;s.style.display='block';
-  setTimeout(()=>s.style.display='none',2500);
+ const s=document.getElementById('os');s.textContent=msg;s.style.display='block';
+ setTimeout(()=>s.style.display='none',2500);
 }
 
 ldStock();
