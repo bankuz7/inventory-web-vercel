@@ -222,18 +222,22 @@ app.get('/api/report/pdf', async (req, res) => {
  }
 
  function drawSummaryCards() {
-   const gap = 10;
+   const gap = 12;
    const cardH = 46;
    const cardW = (W - (gap * 2)) / 3;
    const y0 = doc.y;
 
+   // Force exact, symmetric positions to avoid any rounding drift
+   const x1 = M;
+   const x2 = M + cardW + gap;
+   const x3 = M + (cardW * 2) + (gap * 2);
+
    const cards = [
-     { x: M, bg: '#f0fff4', value: String(totalStock), label: 'Total Stock', color: '#2d6a4f' },
-     { x: M + cardW + gap, bg: '#fff7e6', value: String(lowStock), label: 'Low Stock', color: '#c77d00' },
-     { x: M + (cardW + gap) * 2, bg: '#fde8e8', value: String(outStock), label: 'Out of Stock', color: '#c0392b' },
+     { x: x1, bg: '#f0fff4', value: String(totalStock), label: 'Total Stock', color: '#2d6a4f' },
+     { x: x2, bg: '#fff7e6', value: String(lowStock), label: 'Low Stock', color: '#c77d00' },
+     { x: x3, bg: '#fde8e8', value: String(outStock), label: 'Out of Stock', color: '#c0392b' },
    ];
 
-   // draw boxes
    for (const c of cards) {
      doc.roundedRect(c.x, y0, cardW, cardH, 8).fill(c.bg);
      doc.strokeColor('#e6e6e6').lineWidth(1).roundedRect(c.x, y0, cardW, cardH, 8).stroke();
