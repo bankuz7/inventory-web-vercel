@@ -10,7 +10,9 @@ const KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || process
 const supabase = createClient(URL, KEY);
 
 // ── Serve frontend ──
-app.use(express.static('public'));
+const path = require('path');
+app.use(express.static(path.join(__dirname, 'public')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 // ── GET all drinks (with live stock) ──
 app.get('/api/drinks', async (req, res) => {
