@@ -134,112 +134,85 @@ app.delete('/api/orders/:id', async (req, res) => {
  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── PDF REPORT ──────────────────────────────────────
+// ── PDF REPORT (fridge stock only) ──
 app.get('/api/report/pdf', async (req, res) => {
  try {
  if (!supabase) throw new Error('Database not configured');
- const selTable = req.query.table ? parseInt(req.query.table) : null;
-
- let q = supabase.from('table_orders').select('*, cold_drinks(name,category,unit)').order('created_at');
- if (selTable) q = q.eq('table_number', selTable);
- const { data: orders, error: oErr } = await q;
- if (oErr) throw oErr;
 
  const { data: stock } = await supabase.from('cold_drinks').select('*').order('id');
+ if (!stock || !stock.length) return res.status(400).json({ error: 'No drinks in fridge!' });
 
- const dm = {};
- for (const o of (orders || [])) {
- if (o.cold_drinks && !dm[o.drink_id]) {
- dm[o.drink_id] = { name: o.cold_drinks.name, category: o.cold_drinks.category, unit: o.cold_drinks.unit };
- }
- }
-
- const tg = {};
- for (const o of (orders || [])) {
- if (!tg[o.table_number]) tg[o.table_number] = [];
- tg[o.table_number].push(o);
- }
-
- const doc = new PDFDocument({ size: 'A4', margin: 50 });
+ const now = new Date();
+ const doc = new PDFDocument({ size: 'A4', margin: 40 });
  const chunks = [];
  doc.on('data', c => chunks.push(c));
  doc.on('error', err => {
- console.error('PDF doc error:', err);
+ console.error('PDF err:', err);
  if (!res.headersSent) res.status(500).json({ error: 'PDF generation failed' });
  });
  doc.on('end', () => {
  try {
  const buf = Buffer.concat(chunks);
- const fn = selTable ? 'Barkats-Heaven-Table-' + selTable + '.pdf' : 'Barkats-Heaven-Full-Report.pdf';
+ const fn = 'Barkats-Heaven-Stock-' + now.toISOString().slice(0,10) + '.pdf';
  res.setHeader('Content-Type', 'application/pdf');
  res.setHeader('Content-Disposition', 'attachment; filename="' + fn + '"');
  res.setHeader('Content-Length', buf.length);
- res.setHeader('Cache-Control', 'no-cache');
+ res.setHeader('Cache-Control', 'no-store');
  res.send(buf);
- } catch(e) { console.error('Send error:', e); if (!res.headersSent) res.status(500).json({ error: e.message }); }
+ } catch(e) {
+ console.error('Send err:', e);
+ if (!res.headersSent) res.status(500).json({ error: e.message });
+ }
  });
 
- const now = new Date();
- doc.fontSize(20).font('Helvetica-Bold').text("The Barkat's Heaven", { align: 'center' });
- doc.fontSize(11).font('Helvetica').fillColor('#555').text('Cold Drink Inventory Report', { align: 'center' });
- doc.fontSize(9).fillColor('#888').text(now.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) + '  ' + now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }), { align: 'center' });
- doc.moveDown(0.8);
+ const totalStock = stock.reduce((s, d) => s + (parseInt(d.stock_qty) || 0), 0);
+ const lowStock = stock.filter(d => parseInt(d.stock_qty) <= 5 && parseInt(d.stock_qty) > 0).length;
+ const outStock = stock.filter(d => parseInt(d.stock_qty) <= 0).length;
 
- const totalStock = (stock||[]).reduce((s,d)=>s+(parseInt(d.stock_qty)||0),0);
- const totalTypes = (stock||[]).length;
- const totalOrders = (orders||[]).length;
- const tablesServed = Object.keys(tg).length;
+ // Header
+ doc.fontSize(20).font('Helvetica-Bold').fillColor('#1a3c34').text("The Barkat's Heaven", { align: 'center' });
+ doc.fontSize(11).font('Helvetica').fillColor('#555').text('Fridge Stock Report', { align: 'center' });
+ doc.fontSize(9).fillColor('#999').text(now.toLocaleDateString('en-IN', { day:'2-digit', month:'long', year:'numeric' }) + '  |  ' + now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }), { align: 'center' });
+ doc.moveDown(0.7);
 
- doc.fillColor('#1a3c34').fontSize(9).font('Helvetica-Bold').text('SUMMARY:  ' + totalTypes + ' drink types  |  ' + totalStock + ' total stock  |  ' + tablesServed + ' tables served  |  ' + totalOrders + ' orders');
+ // Summary cards
+ doc.rect(40, doc.y, 220, 50).fill('#f0fff4');
+ doc.rect(270, doc.y, 110, 50).fill('#fff7e6');
+ doc.rect(395, doc.y, 135, 50).fill('#fde8e8');
+ doc.font('Helvetica-Bold').fillColor('#2d6a4f').fontSize(14).text(totalStock + '', 90, doc.y + 5);
+ doc.fillColor('#1a3c34').fontSize(8).text('Total Stock', 80, doc.y + 26);
+ doc.fillColor('#c77d00').fontSize(14).text(lowStock + '', 290, doc.y + 5);
+ doc.fillColor('#1a3c34').fontSize(8).text('Low Stock', 295, doc.y + 26);
+ doc.fillColor('#c0392b').fontSize(14).text(outStock + '', 415, doc.y + 5);
+ doc.fillColor('#1a3c34').fontSize(8).text('Out of Stock', 405, doc.y + 26);
+ doc.y += 60;
  doc.moveDown(0.4);
- doc.strokeColor('#ccc').lineWidth(0.5).moveTo(50, doc.y).lineTo(545, doc.y).stroke();
- doc.moveDown(0.4);
 
- doc.fillColor('#1a3c34').fontSize(10).font('Helvetica-Bold').text(selTable ? 'Table #' + selTable + ' - Stock Left' : 'All Fridge Stock');
- doc.moveDown(0.2);
+ // Table
+ doc.fillColor('#2d6a4f').font('Helvetica-Bold').fontSize(9);
+ doc.rect(40, doc.y, 490, 20).fill('#2d6a4f');
+ doc.fillColor('#fff').text('DRINK NAME', 50, doc.y + 5, { width: 180 }).text('CATEGORY', 240, doc.y + 5, { width: 90 }).text('STOCK', 340, doc.y + 5, { width: 60 }).text('UNIT', 410, doc.y + 5, { width: 90 });
+ doc.y += 22;
 
- if (!stock || !stock.length) {
- doc.fillColor('#999').fontSize(9).text('No drinks in fridge yet.');
- } else {
- const colX = [55, 240, 340, 420];
- doc.fillColor('#2d6a4f').font('Helvetica-Bold').fontSize(8);
- doc.text('DRINK', colX[0], doc.y, { width: 180 });
- doc.text('CATEGORY', colX[1], doc.y, { width: 90 });
- doc.text('STOCK', colX[2], doc.y, { width: 70 });
- doc.text('UNIT', colX[3], doc.y, { width: 60 });
- doc.y += 4;
- doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor('#2d6a4f').lineWidth(0.8).stroke();
- doc.y += 4;
-
- (stock||[]).forEach((s, i) => {
- if (doc.y > 750) { doc.addPage(); doc.y = 50; }
- const sc = s.stock_qty <= 0 ? '#c0392b' : s.stock_qty <= 5 ? '#e67e22' : '#2d6a4f';
+ stock.forEach((s, i) => {
+ if (doc.y > 760) { doc.addPage(); doc.y = 50; }
+ const sq = parseInt(s.stock_qty) || 0;
+ const statusColor = sq <= 0 ? '#c0392b' : sq <= 5 ? '#e67e22' : '#2d6a4f';
+ const rowBg = i % 2 === 0 ? '#f9fbf9' : '#ffffff';
+ doc.rect(40, doc.y, 490, 16).fill(rowBg);
+ doc.strokeColor('#e0e0e0').lineWidth(0.5).rect(40, doc.y, 490, 16).stroke();
  doc.fillColor('#2c1810').font('Helvetica').fontSize(9);
- doc.text(s.name, colX[0], doc.y, { width: 180 });
- doc.text(s.category||'-', colX[1], doc.y, { width: 90 });
- doc.fillColor(sc).text(String(s.stock_qty||0), colX[2], doc.y, { width: 70 });
- doc.fillColor('#2c1810').text(s.unit||'pc', colX[3], doc.y, { width: 60 });
- doc.y += 14;
+ doc.text(s.name || '-', 50, doc.y + 4, { width: 180 });
+ doc.text(s.category || '-', 240, doc.y + 4, { width: 90 });
+ doc.fillColor(statusColor).font('Helvetica-Bold').text(String(sq), 340, doc.y + 4, { width: 60 });
+ doc.fillColor('#2c1810').font('Helvetica').text(s.unit || 'pc', 410, doc.y + 4, { width: 90 });
+ doc.y += 17;
  });
- }
 
- doc.moveDown(0.6);
-
- if (selTable) {
- doc.addPage();
- doc.fillColor('#1a3c34').fontSize(12).font('Helvetica-Bold').text('Table #' + selTable + ' Orders', { align: 'center' });
- doc.moveDown(0.3);
- drawOrdersPdf(doc, tg[selTable]||[], dm);
- } else {
- const tns = Object.keys(tg).sort((a,b)=>a-b);
- for (const t of tns) {
- if (doc.y > 720) doc.addPage();
- doc.fillColor('#1a3c34').fontSize(10).font('Helvetica-Bold').text('Table #' + t);
- doc.moveDown(0.15);
- drawOrdersPdf(doc, tg[t], dm);
- doc.moveDown(0.3);
- }
- }
+ doc.y += 10;
+ doc.strokeColor('#bbb').lineWidth(0.5).moveTo(40, doc.y).lineTo(530, doc.y).stroke();
+ doc.y += 8;
+ doc.font('Helvetica-Bold').fillColor('#1a3c34').fontSize(9).text('Generated by The Barkat\'s Heaven Cold Drink Inventory System', { align: 'center' });
 
  doc.end();
  } catch (e) {
@@ -247,30 +220,6 @@ app.get('/api/report/pdf', async (req, res) => {
  if (!res.headersSent) res.status(500).json({ error: e.message });
  }
 });
-
-function drawOrdersPdf(doc, orders, dm) {
- if (!orders || !orders.length) {
- doc.fillColor('#999').fontSize(9).text('  No orders');
- doc.moveDown(0.3);
- return;
- }
- const colX2 = [55, 90, 310, 360, 400];
- doc.fillColor('#2d6a4f').font('Helvetica-Bold').fontSize(8);
- doc.text('#', colX2[0], doc.y, { width: 30 }).text('DRINK', colX2[1], doc.y, { width: 210 }).text('QTY', colX2[2], doc.y, { width: 40 }).text('TIME', colX2[3], doc.y, { width: 80 }).text('NOTE', colX2[4], doc.y, { width: 100 });
- doc.y += 4;
- doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor('#2d6a4f').lineWidth(0.8).stroke();
- doc.y += 4;
-
- orders.forEach((o, i) => {
- if (doc.y > 750) doc.addPage();
- const d = dm[o.drink_id] || { name: '?', unit: 'pc' };
- const t = new Date(o.created_at);
- const tStr = t.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
- doc.fillColor('#2c1810').font('Helvetica').fontSize(9);
- doc.text(String(o.table_number), colX2[0], doc.y, { width: 30 }).text(d.name, colX2[1], doc.y, { width: 210 }).text('x'+o.quantity, colX2[2], doc.y, { width: 40 }).text(tStr, colX2[3], doc.y, { width: 80 }).text(o.notes||'-', colX2[4], doc.y, { width: 100 });
- doc.y += 13;
- });
-}
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log('Running on ' + port));

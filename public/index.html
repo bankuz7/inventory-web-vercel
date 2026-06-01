@@ -221,7 +221,7 @@ async function cancelOrd(id){
 function dlPdf(){
  const v=document.getElementById('rt').value;
  const w=window.open('/api/report/pdf'+(v?'?table='+v:''));
- const t=setTimeout(()=>{if(w)w.close()},200);
+ setTimeout(()=>{if(w&&w.closed)showMsg('Check downloads folder');}, 500);
 }
 
 function showMsg(msg){
