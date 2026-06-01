@@ -9,238 +9,209 @@ const URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = createClient(URL, KEY);
 
-const INDEX_HTML = `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>The Barkat's Heaven - Drink Inventory</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
-body{background:#f5f0eb;min-height:100vh;color:#2c1810}
-.header{background:linear-gradient(135deg,#5d3a1a,#8b5e3c);color:#fff;padding:16px 24px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
-.logo{width:42px;height:42px;background:#f5d061;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px}
-.header h1{font-size:1.25rem;font-weight:600}
-.header .sub{font-size:.72rem;opacity:.8}
-.container{max-width:960px;margin:20px auto;padding:0 16px}
-.nav{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
-.nav button{background:#fff;border:2px solid #d4b896;padding:8px 18px;border-radius:20px;cursor:pointer;font-size:.82rem;font-weight:500;color:#5d3a1a;transition:.2s}
-.nav button:hover,.nav button.active{background:#5d3a1a;color:#fff;border-color:#5d3a1a}
-.card{background:#fff;border-radius:14px;padding:18px 20px;box-shadow:0 1px 6px rgba(0,0,0,.07);margin-bottom:14px}
-.card h2{font-size:1rem;margin-bottom:10px;color:#5d3a1a}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px}
-.drink-card{background:#faf7f3;border:1px solid #e0d3c0;border-radius:10px;padding:10px;text-align:center;transition:.15s}
-.drink-card:hover{border-color:#c4a882}
-.drink-card .cat{font-size:.65rem;color:#8b7355;text-transform:uppercase;letter-spacing:.5px}
-.drink-card .nm{font-weight:600;font-size:.85rem;margin:3px 0}
-.drink-card .pr{font-size:1rem;font-weight:700}
-.drink-card .un{font-size:.65rem;color:#8b7355}
-.drink-card .acts{display:flex;gap:4px;margin-top:6px;justify-content:center}
-.drink-card .acts button{padding:3px 10px;border-radius:10px;border:none;cursor:pointer;font-size:.7rem}
-.bedit{background:#e8d9c6;color:#5d3a1a}.bedit:hover{background:#d4b896}
-.bdel{background:#fde8e8;color:#c0392b}.bdel:hover{background:#f5c6c6}
-.row{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
-.row label{font-size:.8rem;font-weight:600;min-width:55px;color:#5d3a1a}
-.row input,.row select{flex:1;min-width:120px;padding:7px 10px;border:2px solid #e0d3c0;border-radius:8px;font-size:.84rem;background:#fff}
-.row input:focus,.row select:focus{outline:none;border-color:#8b5e3c}
-.btn{background:#5d3a1a;color:#fff;border:none;padding:9px 22px;border-radius:20px;cursor:pointer;font-size:.84rem;font-weight:600;transition:.2s}
-.btn:hover{background:#3e2610}
-.btn-o{background:#fff;color:#5d3a1a;border:2px solid #5d3a1a}
-.btn-o:hover{background:#f5f0eb}
-.btn-s{padding:5px 13px;font-size:.74rem}
-.ocard{background:#faf7f3;border:1px solid #e0d3c0;border-radius:10px;padding:10px 14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
-.ocard .inf{font-size:.84rem}.ocard .inf strong{color:#5d3a1a}
-.ocard .del{background:none;border:none;cursor:pointer;color:#c0392b;font-size:1.1rem}
-.empty{text-align:center;color:#a0896e;padding:22px;font-size:.88rem}
-.sts{background:#2c5f2e;color:#fff;text-align:center;padding:6px 10px;font-size:.74rem;border-radius:6px;margin-top:8px;display:none}
-select option{color:#2c1810}
-</style>
-</head>
-<body>
-<div class="header">
-  <div class="logo">\\u{1F379}</div>
-  <div><h1>The Barkat's Heaven</h1><div class="sub">Drink Inventory &amp; Table Tracker</div></div>
-</div>
-<div class="container">
-  <div class="nav">
-    <button class="active" onclick="sw('drinks')">Drinks</button>
-    <button onclick="sw('orders')">Table Orders</button>
-    <button onclick="sw('reports')">Reports</button>
-  </div>
-  <div id="t-drinks" class="tab">
-    <div class="card">
-      <h2 id="ft">Add New Drink</h2>
-      <div class="row"><label>Name</label><input id="dn" placeholder="Old Monk"></div>
-      <div class="row"><label>Category</label><select id="dc"><option>Whiskey</option><option>Vodka</option><option>Rum</option><option>Beer</option><option>Wine</option><option>Cocktail</option><option>Soft</option><option>Other</option></select></div>
-      <div class="row"><label>Price</label><input id="dp" type="number" placeholder="350"></div>
-      <div class="row"><label>Unit</label><input id="du" placeholder="peg" value="peg"></div>
-      <button class="btn" id="fb" onclick="svDrink()">+ Add Drink</button>
-      <button class="btn-o btn-s" id="fc" onclick="cnEdit()" style="display:none;margin-left:8px">Cancel</button>
-    </div>
-    <div class="card">
-      <h2>All Drinks (<span id="dct">0</span>)</h2>
-      <div id="dg" class="grid"></div>
-      <div id="de" class="empty">No drinks yet</div>
-    </div>
-  </div>
-  <div id="t-orders" class="tab" style="display:none">
-    <div class="card">
-      <h2>New Order</h2>
-      <div class="row"><label>Table</label><select id="ot"></select></div>
-      <div class="row"><label>Drink</label><select id="od"><option>-- select --</option></select></div>
-      <div class="row"><label>Qty</label><input id="oq" type="number" value="1" min="1"></div>
-      <div class="row"><label>Note</label><input id="on" placeholder="Neat / Extra ice"></div>
-      <button class="btn" onclick="addOrd()">Place Order</button>
-    </div>
-    <div class="card">
-      <h2>Orders</h2>
-      <div id="ol"></div>
-      <div id="oe" class="empty">No orders yet!</div>
-    </div>
-  </div>
-  <div id="t-reports" class="tab" style="display:none">
-    <div class="card">
-      <h2>PDF Report</h2>
-      <div class="row"><label>Table</label><select id="rt"><option value="">All Tables</option></select></div>
-      <button class="btn" onclick="dlPdf()" style="margin-top:6px">Download PDF</button>
-      <div id="rs" class="sts"></div>
-    </div>
-    <div class="card">
-      <h2>Table Summary</h2>
-      <div id="sl"></div>
-      <div id="se" class="empty">No orders.</div>
-    </div>
-  </div>
-</div>
-<script>
-let drinks=[];let eid=null;let emd=false;
-function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
-function sw(t){document.querySelectorAll('.tab').forEach(e=>e.style.display='none');document.getElementById('t-'+t).style.display='block';document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));event.target.classList.add('active');if(t==='orders'){ldSel();ldOrd();}if(t==='reports'){ldSum();ldTOpt();}}
-async function api(u,m,b){const r=await fetch(u,{method:m,headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):null});if(!r.ok){const e=await r.json();throw new Error(e.error||'err');}return r;}
-async function ldDrinks(){try{const r=await api('/api/drinks');drinks=await r.json();rnDrinks();}catch(e){alert(e.message);}}
-function rnDrinks(){const g=document.getElementById('dg'),em=document.getElementById('de');document.getElementById('dct').textContent=drinks.length;if(!drinks.length){g.innerHTML='';em.style.display='block';return;}em.style.display='none';g.innerHTML=drinks.map(d=>'<div class="drink-card"><div class="cat">'+esc(d.category)+'</div><div class="nm">'+esc(d.name)+'</div><div class="pr">Rs '+Number(d.price).toFixed(2)+'</div><div class="un">/'+esc(d.unit)+'</div><div class="acts"><button class="bedit" onclick="stEd('+d.id+')">Edit</button><button class="bdel" onclick="dlDr('+d.id+')">x</button></div></div>').join('');}
-async function svDrink(){const n=document.getElementById('dn').value.trim();const p=parseFloat(document.getElementById('dp').value);const c=document.getElementById('dc').value;const u=document.getElementById('du').value.trim()||'peg';if(!n)return alert('Name?');if(isNaN(p))return alert('Price?');try{const b={name:n,category:c,price:p,unit:u};const u2=emd?'/api/drinks/'+eid:'/api/drinks';await api(u2,emd?'PUT':'POST',b);clFrm();ldDrinks();}catch(e){alert(e.message);}}
-function stEd(id){const d=drinks.find(x=>x.id===id);if(!d)return;emd=true;eid=id;document.getElementById('dn').value=d.name;document.getElementById('dp').value=d.price;document.getElementById('dc').value=d.category;document.getElementById('du').value=d.unit;document.getElementById('ft').textContent='Edit Drink';document.getElementById('fb').textContent='Update';document.getElementById('fc').style.display='inline-block';}
-function cnEdit(){clFrm();}
-function clFrm(){emd=false;eid=null;document.getElementById('dn').value='';document.getElementById('dp').value='';document.getElementById('dc').value='Other';document.getElementById('du').value='peg';document.getElementById('ft').textContent='Add New Drink';document.getElementById('fb').textContent='+ Add Drink';document.getElementById('fc').style.display='none';}
-async function dlDr(id){if(!confirm('Delete?'))return;try{await api('/api/drinks/'+id,'DELETE');ldDrinks();}catch(e){alert(e.message);}}
-async function ldSel(){try{const r=await api('/api/drinks');const d=await r.json();const s=document.getElementById('ot');s.innerHTML='';for(let i=1;i<=20;i++)s.innerHTML+='<option value="'+i+'">Table '+i+'</option>';const s2=document.getElementById('od');s2.innerHTML=d.length?d.map(x=>'<option value="'+x.id+'">'+esc(x.name)+' - Rs '+Number(x.price).toFixed(2)+'/'+esc(x.unit)+'</option>').join(''):'<option>No drinks</option>';}catch(e){alert(e.message);}}
-async function addOrd(){const t=document.getElementById('ot').value;const d=document.getElementById('od').value;const q=parseInt(document.getElementById('oq').value)||1;const n=document.getElementById('on').value.trim();if(!d)return alert('Select drink');try{await api('/api/orders','POST',{table_number:parseInt(t),drink_id:parseInt(d),quantity:q,notes:n});document.getElementById('on').value='';ldOrd();}catch(e){alert(e.message);}}
-async function ldOrd(){try{const r=await api('/api/orders');const o=await r.json();const l=document.getElementById('ol'),em=document.getElementById('oe');if(!o.length){l.innerHTML='';em.style.display='block';return;}em.style.display='none';l.innerHTML=o.slice(0,50).map(x=>{const p=x.drinks?x.drinks.price:0;return '<div class="ocard"><div class="inf"><strong>Table '+x.table_number+'</strong> - '+(x.drinks?esc(x.drinks.name):'?')+' x'+x.quantity+' = Rs '+(p*x.quantity).toFixed(2)+(x.notes?'<br><small>'+esc(x.notes)+'</small>':'')+'</div><button class="del" onclick="dlOrd('+x.id+')">x</button></div>';}).join('');}catch(e){alert(e.message);}}
-async function dlOrd(id){if(!confirm('Remove?'))return;try{await api('/api/orders/'+id,'DELETE');ldOrd();}catch(e){alert(e.message);}}
-async function ldTOpt(){try{const r=await api('/api/orders/summary');const t=await r.json();const s=document.getElementById('rt');s.innerHTML='<option value="">All Tables</option>';t.forEach(x=>{s.innerHTML+='<option value="'+x.table_number+'">Table '+x.table_number+' ('+x.totalOrders+')</option>';});}catch(e){}}
-async function ldSum(){try{const r=await api('/api/orders/summary');const t=await r.json();const l=document.getElementById('sl'),em=document.getElementById('se');if(!t.length){l.innerHTML='';em.style.display='block';return;}em.style.display='none';l.innerHTML=t.map(x=>'<div class="ocard"><div class="inf"><strong>Table '+x.table_number+'</strong> - '+x.totalOrders+' orders</div><button class="btn btn-s btn-o" onclick="document.getElementById(\\'rt\\').value='+x.table_number+';dlPdf()">PDF</button></div>').join('');}catch(e){alert(e.message);}}
-function dlPdf(){const v=document.getElementById('rt').value;window.open('/api/report/pdf'+(v?'?table='+v:''));}
-ldDrinks();
-</script>
-</body>
-</html>`;
+// ── Serve frontend ──
+app.use(express.static('public'));
 
-app.get('/', (req, res) => res.send(INDEX_HTML));
-app.get('/index.html', (req, res) => res.send(INDEX_HTML));
-
+// ── GET all drinks (with live stock) ──
 app.get('/api/drinks', async (req, res) => {
-  try { const { data, error } = await supabase.from('drinks').select('*').order('name'); if (error) throw error; res.json(data || []); }
-  catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.post('/api/drinks', async (req, res) => {
   try {
-    const { name, category, price, unit } = req.body;
-    const { data, error } = await supabase.from('drinks').insert([{ name, category: category||'Other', price: Number(price), unit: unit||'peg' }]).select().single();
-    if (error) throw error; res.json(data);
+    const { data, error } = await supabase.from('cold_drinks').select('*').order('id');
+    if (error) throw error;
+    res.json(data || []);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.put('/api/drinks/:id', async (req, res) => {
+// ── PUT refill stock ──
+app.put('/api/drinks/:id/stock', async (req, res) => {
   try {
-    const { id } = req.params; const { name, category, price, unit } = req.body;
-    const { data, error } = await supabase.from('drinks').update({ name, category, price: Number(price), unit }).eq('id', id).select().single();
-    if (error) throw error; res.json(data);
+    const { qty } = req.body;
+    if (!qty || qty < 0) return res.status(400).json({ error: 'Enter valid quantity' });
+    const { data, error } = await supabase
+      .from('cold_drinks')
+      .update({ stock_qty: parseInt(qty), updated_at: new Date().toISOString() })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+    if (error) throw error;
+    res.json(data);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.delete('/api/drinks/:id', async (req, res) => {
-  try { const { error } = await supabase.from('drinks').delete().eq('id', req.params.id); if (error) throw error; res.json({ success: true }); }
-  catch (e) { res.status(500).json({ error: e.message }); }
-});
-
+// ── GET all orders (optionally filter by table) ──
 app.get('/api/orders', async (req, res) => {
   try {
-    let q = supabase.from('table_orders').select('*, drinks(name,category,price,unit)').order('created_at', { ascending: false });
+    let q = supabase.from('table_orders')
+      .select('*, cold_drinks(name,category,price)')
+      .order('created_at', { ascending: false });
     if (req.query.table) q = q.eq('table_number', parseInt(req.query.table));
-    const { data, error } = await q; if (error) throw error; res.json(data || []);
+    const { data, error } = await q;
+    if (error) throw error;
+    res.json(data || []);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ── GET summary (which tables have orders) ──
 app.get('/api/orders/summary', async (req, res) => {
   try {
     const { data, error } = await supabase.from('table_orders').select('table_number');
     if (error) throw error;
-    const t = {}; for (const r of (data||[])) { if (!t[r.table_number]) t[r.table_number] = { table_number: r.table_number, totalOrders: 0 }; t[r.table_number].totalOrders++; }
-    res.json(Object.values(t).sort((a,b) => a.table_number - b.table_number));
+    const t = {};
+    for (const r of (data || [])) {
+      if (!t[r.table_number]) t[r.table_number] = { table_number: r.table_number, totalOrders: 0 };
+      t[r.table_number].totalOrders++;
+    }
+    res.json(Object.values(t).sort((a, b) => a.table_number - b.table_number));
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ── POST new table order (reduces stock) ──
 app.post('/api/orders', async (req, res) => {
   try {
     const { table_number, drink_id, quantity, notes } = req.body;
-    const { data, error } = await supabase.from('table_orders').insert([{ table_number: parseInt(table_number), drink_id: parseInt(drink_id), quantity: quantity||1, notes }]).select().single();
-    if (error) throw error; res.json(data);
+    const drinkId = parseInt(drink_id);
+    const qty = parseInt(quantity) || 1;
+    const tableNo = parseInt(table_number);
+
+    // Check stock
+    const { data: drink, error: dErr } = await supabase.from('cold_drinks').select('stock_qty, name').eq('id', drinkId).single();
+    if (dErr) throw dErr;
+    if (!drink || drink.stock_qty < qty) return res.status(400).json({ error: `Not enough stock! Available: ${drink ? drink.stock_qty : 0}` });
+
+    // Reduce stock
+    const { error: uErr } = await supabase.from('cold_drinks').update({ stock_qty: drink.stock_qty - qty }).eq('id', drinkId);
+    if (uErr) throw uErr;
+
+    // Create order
+    const { data: order, error: oErr } = await supabase.from('table_orders')
+      .insert([{ table_number: tableNo, drink_id: drinkId, quantity: qty, notes }])
+      .select().single();
+    if (oErr) throw oErr;
+    res.json(order);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ── DELETE order (cancel) — restores stock ──
 app.delete('/api/orders/:id', async (req, res) => {
-  try { const { error } = await supabase.from('table_orders').delete().eq('id', req.params.id); if (error) throw error; res.json({ success: true }); }
-  catch (e) { res.status(500).json({ error: e.message }); }
+  try {
+    // Get order details to restore stock
+    const { data: order, error: oErr } = await supabase.from('table_orders').select('drink_id, quantity').eq('id', req.params.id).single();
+    if (oErr || !order) return res.status(404).json({ error: 'Order not found' });
+
+    // Restore stock
+    const { data: drink, error: dErr } = await supabase.from('cold_drinks').select('stock_qty').eq('id', order.drink_id).single();
+    if (!dErr && drink) {
+      await supabase.from('cold_drinks').update({ stock_qty: drink.stock_qty + order.quantity }).eq('id', order.drink_id);
+    }
+
+    // Delete order
+    const { error } = await supabase.from('table_orders').delete().eq('id', req.params.id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ── PDF REPORT ──
 app.get('/api/report/pdf', async (req, res) => {
   try {
-    const sel = req.query.table ? parseInt(req.query.table) : null;
-    let q = supabase.from('table_orders').select('*, drinks(name,category,price,unit)').order('created_at');
-    if (sel) q = q.eq('table_number', sel);
-    const { data: orders, error } = await q; if (error) throw error;
+    const selTable = req.query.table ? parseInt(req.query.table) : null;
+
+    let q = supabase.from('table_orders').select('*, cold_drinks(name,category,price)').order('created_at');
+    if (selTable) q = q.eq('table_number', selTable);
+    const { data: orders, error: oErr } = await q;
+    if (oErr) throw oErr;
+
+    // Get current stock too
+    const { data: stock } = await supabase.from('cold_drinks').select('*').order('id');
+
+    // Build drink map
     const dm = {};
-    for (const o of (orders||[])) { if (o.drinks && !dm[o.drink_id]) dm[o.drink_id] = { name: o.drinks.name, price: parseFloat(o.drinks.price||0) }; }
-    const tg = {}; for (const o of (orders||[])) { if (!tg[o.table_number]) tg[o.table_number] = []; tg[o.table_number].push(o); }
+    for (const o of (orders || [])) {
+      if (o.cold_drinks && !dm[o.drink_id]) {
+        dm[o.drink_id] = { name: o.cold_drinks.name, price: parseFloat(o.cold_drinks.price || 0) };
+      }
+    }
+
+    // Group orders by table
+    const tg = {};
+    for (const o of (orders || [])) {
+      if (!tg[o.table_number]) tg[o.table_number] = [];
+      tg[o.table_number].push(o);
+    }
 
     const doc = new PDFDocument({ margin: 50 });
-    const fn = sel ? 'report-table-'+sel+'.pdf' : 'report-all.pdf';
+    const fn = selTable ? 'table-' + selTable + '-report.pdf' : 'full-inventory-report.pdf';
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename="'+fn+'"');
+    res.setHeader('Content-Disposition', 'attachment; filename="' + fn + '"');
     doc.pipe(res);
+
     doc.fontSize(20).font('Helvetica-Bold').text("The Barkat's Heaven", { align: 'center' });
-    doc.fontSize(14).text('Drink Inventory Report', { align: 'center' });
+    doc.fontSize(14).text('Cold Drink Inventory Report', { align: 'center' });
     doc.fontSize(9).font('Helvetica').text('Generated: ' + new Date().toLocaleString('en-IN'), { align: 'center' });
     doc.moveDown(0.8);
 
-    if (sel) {
-      doc.fontSize(12).font('Helvetica-Bold').text('Table #'+sel, { align: 'center' }); doc.moveDown(0.4);
-      drawOrders(doc, tg[sel]||[], dm);
+    // Stock overview (all or per table)
+    const sm = selTable ? 'Table #' + selTable : 'All Tables';
+    doc.fontSize(12).font('Helvetica-Bold').text('Stock Overview - ' + sm, { align: 'left' });
+    doc.moveDown(0.3);
+    doc.font('Helvetica-Bold');
+    doc.text('Drink', 55); doc.text('Stock Left', 220); doc.text('Price', 300); doc.text('Value', 370);
+    doc.moveTo(50, doc.y).lineTo(460, doc.y).stroke(); doc.moveDown(0.3);
+
+    let totalStockValue = 0;
+    (stock || []).forEach(s => {
+      const val = parseFloat(s.price || 0) * (s.stock_qty || 0);
+      totalStockValue += val;
+      doc.font('Helvetica');
+      doc.text(s.name, 55);
+      doc.text(s.stock_qty + ' bottles', 220);
+      doc.text('Rs ' + parseFloat(s.price || 0).toFixed(2), 300);
+      doc.text('Rs ' + val.toFixed(2), 370);
+      doc.moveDown(0.25);
+    });
+    doc.moveDown(0.3);
+    doc.font('Helvetica-Bold').text('Total Stock Value:     Rs ' + totalStockValue.toFixed(2));
+    doc.moveDown(0.6);
+
+    // Orders detail
+    if (selTable) {
+      doc.addPage();
+      doc.fontSize(13).font('Helvetica-Bold').text('Table #' + selTable + ' - Orders', { align: 'center' });
+      doc.moveDown(0.4);
+      drawOrders(doc, tg[selTable] || [], dm);
     } else {
-      const tns = Object.keys(tg).sort((a,b) => a-b); let gt = 0;
-      for (const t of tns) { doc.addPage(); doc.fontSize(13).font('Helvetica-Bold').text('Table #'+t, { align: 'center' }); doc.moveDown(0.4); gt += drawOrders(doc, tg[t], dm); }
-      doc.addPage(); doc.fontSize(16).font('Helvetica-Bold').text('Overall Summary', { align: 'center' }); doc.moveDown(0.6);
-      doc.font('Helvetica-Bold').text('Table',55); doc.text('Orders',130); doc.text('Amount',240); doc.text('Total',340);
-      doc.moveTo(50, doc.y).lineTo(460, doc.y).stroke(); doc.moveDown(0.3);
-      for (const t of tns) { const o=tg[t]||[]; let tv=0; o.forEach(x=>{const d=dm[x.drink_id]; tv+=(d?d.price:0)*x.quantity;}); doc.font('Helvetica').text('Table '+t+'          '+o.length+' orders          Rs '+tv.toFixed(2),55); }
-      doc.moveDown(0.4); doc.font('Helvetica-Bold').text('GRAND TOTAL                    Rs '+gt.toFixed(2));
+      const tns = Object.keys(tg).sort((a, b) => a - b);
+      for (const t of tns) {
+        doc.addPage();
+        doc.fontSize(13).font('Helvetica-Bold').text('Table #' + t + ' - Orders', { align: 'center' });
+        doc.moveDown(0.4);
+        drawOrders(doc, tg[t], dm);
+      }
     }
+
     doc.end();
   } catch (e) { console.error(e); res.status(500).json({ error: e.message }); }
 });
 
 function drawOrders(doc, orders, dm) {
   let tot = 0;
-  doc.font('Helvetica-Bold'); doc.text('#',55); doc.text('Drink',85); doc.text('Qty',215); doc.text('Price',255); doc.text('Amount',325);
-  doc.moveTo(50, doc.y).lineTo(460, doc.y).stroke(); doc.moveDown(0.3);
+  doc.font('Helvetica-Bold');
+  doc.text('Table', 55); doc.text('Drink', 100); doc.text('Qty', 230); doc.text('Price', 260); doc.text('Amount', 330);
+  doc.moveTo(50, doc.y).lineTo(460, doc.y).stroke(); doc.moveDown(0.25);
   for (const o of orders) {
-    const d = dm[o.drink_id]||{name:'?',price:0}; const a = d.price*o.quantity; tot+=a;
-    doc.font('Helvetica'); doc.text(String(o.table_number),55); doc.text(d.name+(o.notes?' ('+o.notes+')':''),85); doc.text(String(o.quantity),215);
-    doc.text('Rs '+d.price.toFixed(2),255); doc.text('Rs '+a.toFixed(2),325); doc.moveDown(0.25);
+    const d = dm[o.drink_id] || { name: '?', price: 0 };
+    const a = d.price * o.quantity; tot += a;
+    doc.font('Helvetica');
+    doc.text('#' + o.table_number, 55);
+    doc.text(d.name + (o.notes ? ' (' + o.notes + ')' : ''), 100);
+    doc.text('x' + o.quantity, 230);
+    doc.text('Rs ' + d.price.toFixed(2), 260);
+    doc.text('Rs ' + a.toFixed(2), 330);
+    doc.moveDown(0.22);
   }
-  doc.moveDown(0.4); doc.font('Helvetica-Bold').text('Table Total:                     Rs '+tot.toFixed(2)); return tot;
+  doc.moveDown(0.3);
+  doc.font('Helvetica-Bold').text('Total:                    Rs ' + tot.toFixed(2));
+  return tot;
 }
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log('Server: '+port));
+app.listen(port, () => console.log('Running on ' + port));
