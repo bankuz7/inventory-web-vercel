@@ -201,50 +201,127 @@ app.get('/api/report/pdf', async (req, res) => {
  const lowStock = stock.filter(d => parseInt(d.stock_qty) <= 5 && parseInt(d.stock_qty) > 0).length;
  const outStock = stock.filter(d => parseInt(d.stock_qty) <= 0).length;
 
- // Header
- doc.fontSize(20).font('Helvetica-Bold').fillColor('#1a3c34').text("The Barkat's Heaven", { align: 'center' });
- doc.fontSize(11).font('Helvetica').fillColor('#555').text('Fridge Stock Report', { align: 'center' });
- doc.fontSize(9).fillColor('#999').text(now.toLocaleDateString('en-IN', { day:'2-digit', month:'long', year:'numeric' }) + '  |  ' + now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }), { align: 'center' });
- doc.moveDown(0.7);
+ // Layout constants
+ const M = 40;
+ const W = doc.page.width - (M * 2);
+ const PAGE_H = doc.page.height;
 
- // Summary cards
- doc.rect(40, doc.y, 220, 50).fill('#f0fff4');
- doc.rect(270, doc.y, 110, 50).fill('#fff7e6');
- doc.rect(395, doc.y, 135, 50).fill('#fde8e8');
- doc.font('Helvetica-Bold').fillColor('#2d6a4f').fontSize(14).text(totalStock + '', 90, doc.y + 5);
- doc.fillColor('#1a3c34').fontSize(8).text('Total Stock', 80, doc.y + 26);
- doc.fillColor('#c77d00').fontSize(14).text(lowStock + '', 290, doc.y + 5);
- doc.fillColor('#1a3c34').fontSize(8).text('Low Stock', 295, doc.y + 26);
- doc.fillColor('#c0392b').fontSize(14).text(outStock + '', 415, doc.y + 5);
- doc.fillColor('#1a3c34').fontSize(8).text('Out of Stock', 405, doc.y + 26);
- doc.y += 60;
- doc.moveDown(0.4);
+ function drawTopHeader(isContinued = false) {
+   const title = "The Barkat's Heaven";
+   const sub = isContinued ? 'Fridge Stock Report (continued)' : 'Fridge Stock Report';
+   const dt = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }) +
+     '  |  ' +
+     now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
- // Table
- doc.fillColor('#2d6a4f').font('Helvetica-Bold').fontSize(9);
- doc.rect(40, doc.y, 490, 20).fill('#2d6a4f');
- doc.fillColor('#fff').text('DRINK NAME', 50, doc.y + 5, { width: 180 }).text('CATEGORY', 240, doc.y + 5, { width: 90 }).text('STOCK', 340, doc.y + 5, { width: 60 }).text('UNIT', 410, doc.y + 5, { width: 90 });
- doc.y += 22;
+   doc.font('Helvetica-Bold').fontSize(18).fillColor('#1a3c34').text(title, M, doc.y, { width: W, align: 'center' });
+   doc.moveDown(0.15);
+   doc.font('Helvetica').fontSize(11).fillColor('#555').text(sub, M, doc.y, { width: W, align: 'center' });
+   doc.moveDown(0.15);
+   doc.font('Helvetica').fontSize(9).fillColor('#777').text(dt, M, doc.y, { width: W, align: 'center' });
+   doc.moveDown(0.8);
+ }
 
+ function drawSummaryCards() {
+   const gap = 10;
+   const cardH = 46;
+   const cardW = (W - (gap * 2)) / 3;
+   const y0 = doc.y;
+
+   const cards = [
+     { x: M, bg: '#f0fff4', value: String(totalStock), label: 'Total Stock', color: '#2d6a4f' },
+     { x: M + cardW + gap, bg: '#fff7e6', value: String(lowStock), label: 'Low Stock', color: '#c77d00' },
+     { x: M + (cardW + gap) * 2, bg: '#fde8e8', value: String(outStock), label: 'Out of Stock', color: '#c0392b' },
+   ];
+
+   // draw boxes
+   for (const c of cards) {
+     doc.roundedRect(c.x, y0, cardW, cardH, 8).fill(c.bg);
+     doc.strokeColor('#e6e6e6').lineWidth(1).roundedRect(c.x, y0, cardW, cardH, 8).stroke();
+
+     doc.font('Helvetica-Bold').fontSize(16).fillColor(c.color)
+       .text(c.value, c.x, y0 + 9, { width: cardW, align: 'center' });
+     doc.font('Helvetica').fontSize(9).fillColor('#1a3c34')
+       .text(c.label, c.x, y0 + 28, { width: cardW, align: 'center' });
+   }
+
+   doc.y = y0 + cardH + 16;
+ }
+
+ function drawTableHeader() {
+   const headerH = 22;
+   const yH = doc.y;
+
+   // column widths (sum = W)
+   const colName = 250;
+   const colCat = 130;
+   const colQty = 55;
+   const colUnit = W - (colName + colCat + colQty);
+
+   const xName = M;
+   const xCat = xName + colName;
+   const xQty = xCat + colCat;
+   const xUnit = xQty + colQty;
+
+   doc.rect(M, yH, W, headerH).fill('#2d6a4f');
+   doc.font('Helvetica-Bold').fontSize(9).fillColor('#fff');
+
+   const ty = yH + 6;
+   doc.text('DRINK NAME', xName + 10, ty, { width: colName - 10 });
+   doc.text('CATEGORY', xCat + 10, ty, { width: colCat - 10 });
+   doc.text('QTY', xQty, ty, { width: colQty - 10, align: 'right' });
+   doc.text('UNIT', xUnit + 10, ty, { width: colUnit - 10 });
+
+   doc.y = yH + headerH;
+
+   return { colName, colCat, colQty, colUnit, xName, xCat, xQty, xUnit };
+ }
+
+ function ensureSpace(rowH, columns) {
+   const bottom = PAGE_H - M;
+   if (doc.y + rowH > bottom) {
+     doc.addPage();
+     doc.y = M;
+     drawTopHeader(true);
+     return drawTableHeader();
+   }
+   return columns;
+ }
+
+ drawTopHeader(false);
+ drawSummaryCards();
+ let cols = drawTableHeader();
+
+ const rowH = 22;
  stock.forEach((s, i) => {
- if (doc.y > 760) { doc.addPage(); doc.y = 50; }
- const sq = parseInt(s.stock_qty) || 0;
- const statusColor = sq <= 0 ? '#c0392b' : sq <= 5 ? '#e67e22' : '#2d6a4f';
- const rowBg = i % 2 === 0 ? '#f9fbf9' : '#ffffff';
- doc.rect(40, doc.y, 490, 16).fill(rowBg);
- doc.strokeColor('#e0e0e0').lineWidth(0.5).rect(40, doc.y, 490, 16).stroke();
- doc.fillColor('#2c1810').font('Helvetica').fontSize(9);
- doc.text(s.name || '-', 50, doc.y + 4, { width: 180 });
- doc.text(s.category || '-', 240, doc.y + 4, { width: 90 });
- doc.fillColor(statusColor).font('Helvetica-Bold').text(String(sq), 340, doc.y + 4, { width: 60 });
- doc.fillColor('#2c1810').font('Helvetica').text(s.unit || 'pc', 410, doc.y + 4, { width: 90 });
- doc.y += 17;
+   cols = ensureSpace(rowH, cols);
+
+   const yR = doc.y;
+   const sq = parseInt(s.stock_qty) || 0;
+   const statusColor = sq <= 0 ? '#c0392b' : sq <= 5 ? '#e67e22' : '#2d6a4f';
+   const rowBg = i % 2 === 0 ? '#f9fbf9' : '#ffffff';
+
+   doc.rect(M, yR, W, rowH).fill(rowBg);
+   doc.strokeColor('#e5e5e5').lineWidth(0.5).rect(M, yR, W, rowH).stroke();
+
+   doc.font('Helvetica').fontSize(9).fillColor('#2c1810');
+   doc.text(s.name || '-', cols.xName + 10, yR + 7, { width: cols.colName - 12 });
+   doc.text(s.category || '-', cols.xCat + 10, yR + 7, { width: cols.colCat - 12 });
+
+   doc.font('Helvetica-Bold').fillColor(statusColor);
+   doc.text(String(sq), cols.xQty, yR + 7, { width: cols.colQty - 10, align: 'right' });
+
+   doc.font('Helvetica').fillColor('#2c1810');
+   doc.text(s.unit || 'pc', cols.xUnit + 10, yR + 7, { width: cols.colUnit - 12 });
+
+   doc.y = yR + rowH;
  });
 
- doc.y += 10;
- doc.strokeColor('#bbb').lineWidth(0.5).moveTo(40, doc.y).lineTo(530, doc.y).stroke();
- doc.y += 8;
- doc.font('Helvetica-Bold').fillColor('#1a3c34').fontSize(9).text('Generated by The Barkat\'s Heaven Cold Drink Inventory System', { align: 'center' });
+ doc.moveDown(0.7);
+ const yF = doc.y;
+ doc.strokeColor('#bbb').lineWidth(0.5).moveTo(M, yF).lineTo(M + W, yF).stroke();
+ doc.moveDown(0.4);
+ doc.font('Helvetica').fillColor('#444').fontSize(9)
+   .text('Generated by The Barkat\'s Heaven Cold Drink Inventory System', M, doc.y, { width: W, align: 'center' });
 
  doc.end();
  } catch (e) {
