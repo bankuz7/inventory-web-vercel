@@ -185,11 +185,14 @@ app.get('/api/report/pdf', async (req, res) => {
  doc.on('end', () => {
  try {
  const buf = Buffer.concat(chunks);
- const fn = 'Barkats-Heaven-Stock-' + now.toISOString().slice(0,10) + '.pdf';
+ const stamp = now.toISOString().replace(/[:.]/g, '-');
+ const fn = 'Barkats-Heaven-Stock-' + stamp.slice(0, 19) + '.pdf';
  res.setHeader('Content-Type', 'application/pdf');
  res.setHeader('Content-Disposition', 'attachment; filename="' + fn + '"');
  res.setHeader('Content-Length', buf.length);
  res.setHeader('Cache-Control', 'no-store');
+ // Debug header so we can confirm which layout is deployed
+ res.setHeader('X-Report-Layout', 'v2');
  res.send(buf);
  } catch(e) {
  console.error('Send err:', e);
