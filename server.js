@@ -21,6 +21,28 @@ app.get('/api/drinks', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ── POST add new drink ──
+app.post('/api/drinks', async (req, res) => {
+  try {
+    const { name, category, price, unit, stock_qty } = req.body;
+    const { data, error } = await supabase.from('cold_drinks').insert([{
+      name, category: category||'Soda', price: Number(price)||40,
+      unit: unit||'bottle', stock_qty: parseInt(stock_qty)||0
+    }]).select().single();
+    if (error) throw error;
+    res.json(data);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── DELETE drink ──
+app.delete('/api/drinks/:id', async (req, res) => {
+  try {
+    const { error } = await supabase.from('cold_drinks').delete().eq('id', req.params.id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ── PUT refill stock ──
 app.put('/api/drinks/:id/stock', async (req, res) => {
   try {

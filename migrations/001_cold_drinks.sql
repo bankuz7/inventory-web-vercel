@@ -1,7 +1,7 @@
 -- Cold Drink Inventory Schema
 -- Tracks fridge stock + table orders (reduce stock on serve)
 
--- Cold drinks catalog (pre-loaded items, just update stock)
+-- Cold drinks catalog (user adds their own)
 CREATE TABLE IF NOT EXISTS cold_drinks (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   name TEXT NOT NULL,
@@ -39,19 +39,3 @@ CREATE POLICY "public delete drinks" ON cold_drinks FOR DELETE USING (true);
 CREATE POLICY "public read orders" ON table_orders FOR SELECT USING (true);
 CREATE POLICY "public insert orders" ON table_orders FOR INSERT WITH CHECK (true);
 CREATE POLICY "public delete orders" ON table_orders FOR DELETE USING (true);
-
--- Seed initial data (common cold drinks)
-INSERT INTO cold_drinks (name, category, price, stock_qty) VALUES
-  ('Coca-Cola', 'Soda', 40, 24),
-  ('Sprite', 'Soda', 40, 24),
-  ('Fanta Orange', 'Soda', 40, 18),
-  ('Thumbs Up', 'Soda', 40, 20),
-  ('Limca', 'Soda', 35, 16),
-  ('Maaza', 'Mango', 40, 20),
-  ('Slice', 'Mango', 40, 15),
-  ('Kinley Soda', 'Soda', 30, 30),
-  ('Bisleri Water', 'Water', 20, 30),
-  ('Red Bull', 'Energy', 120, 10),
-  ('Monster', 'Energy', 110, 8),
-  ('Paperboat Aqua', 'Water', 15, 25)
-ON CONFLICT DO NOTHING;
