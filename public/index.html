@@ -105,11 +105,10 @@ select option{color:#2c1810}
  <div id="t-report" class="tab" style="display:none">
  <div class="crd">
  <h2>📄 Download PDF Report</h2>
- <div class="row">
-  <label>Filter</label>
-  <select id="rt"><option value="">All Tables - Full Report</option><script>for(let i=1;i<=30;i++) document.write('<option value="'+i+'">Table '+i+'</option>')</script></select>
+ <div style="font-size:.84rem;color:#1a3c34;line-height:1.3">
+  PDF me sirf <strong>Fridge ka Live Stock</strong> aata hai.
  </div>
- <button class="btn btn-w" onclick="dlPdf()" style="margin-top:6px">Download PDF</button>
+ <button class="btn btn-w" onclick="dlPdf()" style="margin-top:10px">Download PDF</button>
  <div id="rs" class="sts"></div>
  </div>
  </div>
@@ -219,8 +218,8 @@ async function cancelOrd(id){
 
 // ── REPORT ──
 function dlPdf(){
- const v=document.getElementById('rt').value;
- const w=window.open('/api/report/pdf'+(v?'?table='+v:''));
+ // Stock-only PDF
+ const w=window.open('/api/report/pdf');
  setTimeout(()=>{if(w&&w.closed)showMsg('Check downloads folder');}, 500);
 }
 

@@ -7,13 +7,45 @@ app.use(express.json());
 
 const URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-let supabase;
-try { supabase = createClient(URL, KEY); } catch(e) { console.error('Supabase init error:', e.message); }
+
+let supabase = null;
+if (!URL || !KEY) {
+  console.warn('Supabase not configured: missing SUPABASE_URL and/or SUPABASE_ANON_KEY');
+} else {
+  try {
+    supabase = createClient(URL, KEY);
+  } catch (e) {
+    console.error('Supabase init error:', e.message);
+    supabase = null;
+  }
+}
 
 // ── Serve frontend ──
 const path = require('path');
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+
+// ── Health check (useful on Vercel) ──
+app.get('/api/health', async (req, res) => {
+  try {
+    const env = {
+      hasUrl: Boolean(URL),
+      hasKey: Boolean(KEY),
+      supabaseReady: Boolean(supabase),
+    };
+
+    // Optional lightweight DB ping
+    let db = { ok: false };
+    if (supabase) {
+      const { error } = await supabase.from('cold_drinks').select('id').limit(1);
+      db = { ok: !error, error: error ? error.message : null };
+    }
+
+    res.json({ ok: true, env, db });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
 
 // ── GET all drinks ──
 app.get('/api/drinks', async (req, res) => {
@@ -221,5 +253,10 @@ app.get('/api/report/pdf', async (req, res) => {
  }
 });
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => console.log('Running on ' + port));
+// Local dev only: Vercel serverless does not require app.listen().
+if (require.main === module) {
+  const port = process.env.PORT || 3000;
+  app.listen(port, () => console.log('Running on ' + port));
+}
+
+module.exports = app;
