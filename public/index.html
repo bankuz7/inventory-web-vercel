@@ -219,8 +219,8 @@ async function cancelOrd(id){
 // ── REPORT ──
 function dlPdf(){
  // Stock-only PDF
- const w=window.open('/api/report/pdf');
- setTimeout(()=>{if(w&&w.closed)showMsg('Check downloads folder');}, 500);
+ // NOTE: window.open() is blocked on many mobile browsers; use same-tab navigation.
+ window.location.assign('/api/report/pdf');
 }
 
 function showMsg(msg){
